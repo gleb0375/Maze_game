@@ -1,0 +1,8 @@
+10x7
+oooooooooo
+o        o
+o   @    o
+o   A    o
+o   *    o
+o   H    o
+oooooooooo
