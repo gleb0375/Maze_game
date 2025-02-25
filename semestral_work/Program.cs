@@ -2,8 +2,10 @@ using Microsoft.Extensions.Configuration;
 using semestral_work.Config;
 using semestral_work.Map;
 using System;
-using System.IO;
 using Serilog;
+using semestral_work.Graphics;
+using OpenTK.Mathematics;
+using OpenTK.Windowing.Desktop;
 
 namespace semestral_work
 {
@@ -14,23 +16,24 @@ namespace semestral_work
             AppConfig.Init();
             LoggerSetup.InitializeLogger();
 
-            try
-            {
-                ParsedMap map = MapParser.ParseMap();
-                Log.Information("Map has been successfully parsed!");
+            ParsedMap map = MapParser.ParseMap();
+            // Для примера создадим камеру: стартовая позиция чуть выше пола (y=2)
+            // и немного смещена по Z
+            var camera = new Camera(800, 600, new Vector3(0, 2, 5));
 
-                for (int i = 0; i < map.Rows; i++)
-                {
-                    for (int j = 0; j < map.Columns; j++)
-                    {
-                        Console.Write($"{map.Cells[i, j],-15} ");
-                    }
-                    Console.WriteLine();
-                }
-            }
-            catch (Exception ex)
+            (int width, int height) = AppConfig.GetWindowDimensions();
+
+            var nativeSettings = new NativeWindowSettings()
             {
-                Log.Error(ex, "Error loading map");
+                Size = new Vector2i(width, height),
+                WindowBorder = OpenTK.Windowing.Common.WindowBorder.Resizable,
+                Title = "Maze Game"
+            };
+            var gameWindowSettings = GameWindowSettings.Default;
+
+            using (var game = new Game(gameWindowSettings, nativeSettings, map, camera))
+            {
+                game.Run();
             }
 
             Log.CloseAndFlush();
