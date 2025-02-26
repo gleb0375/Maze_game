@@ -15,6 +15,8 @@ namespace semestral_work.Map
         Door,
         SolidObject,
         Enemy,
-        Collectable
+        Collectable,
+        Photo1,
+        Photo2
     }
 }

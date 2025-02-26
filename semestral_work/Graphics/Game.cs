@@ -5,9 +5,7 @@ using OpenTK.Windowing.Desktop;
 using Serilog;
 using semestral_work.Config;
 using semestral_work.Map;
-using System;
-using System.Collections.Generic;
-using System.IO;
+using GLKeys = OpenTK.Windowing.GraphicsLibraryFramework.Keys;
 
 namespace semestral_work.Graphics
 {
@@ -26,7 +24,9 @@ namespace semestral_work.Graphics
 
         private Shader? _shader;
         private int _textureFloor;  // Текстура пола
-        private int _textureWalls;  // Текстура для стен (можно переиспользовать floor, если нужно)
+        private int _textureWalls;  // Текстура для стен
+
+        private bool _mouseGrabbed = true;
 
         public Game(GameWindowSettings gameWindowSettings,
                     NativeWindowSettings nativeWindowSettings,
@@ -37,6 +37,7 @@ namespace semestral_work.Graphics
             _map = map;
             _camera = camera;
             _wallMatrices = new List<Matrix4>();
+            CursorState = CursorState.Grabbed;
         }
 
         protected override void OnLoad()
@@ -121,9 +122,16 @@ namespace semestral_work.Graphics
         {
             base.OnUpdateFrame(args);
 
-            var keyboard = KeyboardState;
-            var mouse = MouseState;
-            _camera.Update(keyboard, mouse, args);
+            // Обработка клавиши Esc для переключения режима курсора
+            var input = KeyboardState;
+            if (input.IsKeyPressed(GLKeys.Escape))
+            {
+                _mouseGrabbed = !_mouseGrabbed;
+                CursorState = _mouseGrabbed ? CursorState.Grabbed : CursorState.Normal;
+            }
+
+            // Обновляем камеру
+            _camera.Update(KeyboardState, MouseState, args);
         }
 
         protected override void OnRenderFrame(FrameEventArgs args)

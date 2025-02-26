@@ -96,6 +96,10 @@ namespace semestral_work.Map
                 return CellType.Enemy;
             else if (c >= 'T' && c <= 'Z')
                 return CellType.Collectable;
+            else if (c == 'k')
+                return CellType.Photo1;
+            else if (c == 'l')
+                return CellType.Photo1;
             else
                 return CellType.Free;
         }

@@ -48,7 +48,8 @@ namespace semestral_work
             (int width, int height) = AppConfig.GetWindowDimensions();
 
             // Создаём камеру
-            var camera = new Camera(width, height, cameraStartPosition);
+            var camera = new Camera(width, height, cameraStartPosition, map);
+
 
             // Создаём окно
             var nativeSettings = new NativeWindowSettings()
