@@ -17,12 +17,40 @@ namespace semestral_work
             LoggerSetup.InitializeLogger();
 
             ParsedMap map = MapParser.ParseMap();
-            // Для примера создадим камеру: стартовая позиция чуть выше пола (y=2)
-            // и немного смещена по Z
-            var camera = new Camera(800, 600, new Vector3(0, 2, 5));
+
+            // Ищем позицию PlayerStart
+            int startRow = -1, startCol = -1;
+            for (int r = 0; r < map.Rows; r++)
+            {
+                bool found = false;
+                for (int c = 0; c < map.Columns; c++)
+                {
+                    if (map.Cells[r, c] == CellType.PlayerStart)
+                    {
+                        startRow = r;
+                        startCol = c;
+                        found = true;
+                        break;
+                    }
+                }
+                if (found) break;
+            }
+
+            if (startRow == -1 || startCol == -1)
+                throw new Exception("No player start '@' found in map.");
+
+            // Рассчитываем мировые координаты центра этой клетки
+            float startX = startCol * 2 + 1;
+            float startZ = startRow * 2 + 1;
+            // Камера на высоте глаз 1.7 м
+            var cameraStartPosition = new Vector3(startX, 1.7f, startZ);
 
             (int width, int height) = AppConfig.GetWindowDimensions();
 
+            // Создаём камеру
+            var camera = new Camera(width, height, cameraStartPosition);
+
+            // Создаём окно
             var nativeSettings = new NativeWindowSettings()
             {
                 Size = new Vector2i(width, height),
@@ -31,6 +59,7 @@ namespace semestral_work
             };
             var gameWindowSettings = GameWindowSettings.Default;
 
+            // Запускаем Game
             using (var game = new Game(gameWindowSettings, nativeSettings, map, camera))
             {
                 game.Run();
