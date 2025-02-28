@@ -18,40 +18,15 @@ namespace semestral_work
 
             ParsedMap map = MapParser.ParseMap();
 
-            // Ищем позицию PlayerStart
-            int startRow = -1, startCol = -1;
-            for (int r = 0; r < map.Rows; r++)
-            {
-                bool found = false;
-                for (int c = 0; c < map.Columns; c++)
-                {
-                    if (map.Cells[r, c] == CellType.PlayerStart)
-                    {
-                        startRow = r;
-                        startCol = c;
-                        found = true;
-                        break;
-                    }
-                }
-                if (found) break;
-            }
-
-            if (startRow == -1 || startCol == -1)
-                throw new Exception("No player start '@' found in map.");
-
-            // Рассчитываем мировые координаты центра этой клетки
-            float startX = startCol * 2 + 1;
-            float startZ = startRow * 2 + 1;
-            // Камера на высоте глаз 1.7 м
-            var cameraStartPosition = new Vector3(startX, 1.7f, startZ);
+            // Получаем стартовую позицию игрока из карты
+            Vector3 cameraStartPosition = GetPlayerStartPosition(map);
 
             (int width, int height) = AppConfig.GetWindowDimensions();
 
-            // Создаём камеру
+            // Создаём камеру, передавая карту (можно использовать для коллизий и т.д.)
             var camera = new Camera(width, height, cameraStartPosition, map);
 
-
-            // Создаём окно
+            // Настраиваем параметры окна
             var nativeSettings = new NativeWindowSettings()
             {
                 Size = new Vector2i(width, height),
@@ -60,13 +35,46 @@ namespace semestral_work
             };
             var gameWindowSettings = GameWindowSettings.Default;
 
-            // Запускаем Game
             using (var game = new Game(gameWindowSettings, nativeSettings, map, camera))
             {
                 game.Run();
             }
 
             Log.CloseAndFlush();
+        }
+
+        /// <summary>
+        /// Ищет в ParsedMap ячейку PlayerStart и возвращает мировые координаты центра этой клетки.
+        /// Если ячейка не найдена, выбрасывает исключение.
+        /// </summary>
+        private static Vector3 GetPlayerStartPosition(ParsedMap map)
+        {
+            int startRow = -1, startCol = -1;
+            for (int r = 0; r < map.Rows; r++)
+            {
+                for (int c = 0; c < map.Columns; c++)
+                {
+                    if (map.Cells[r, c] == CellType.PlayerStart)
+                    {
+                        startRow = r;
+                        startCol = c;
+                        break;
+                    }
+                }
+                if (startRow != -1)
+                    break;
+            }
+
+            if (startRow == -1 || startCol == -1)
+                throw new Exception("No player start '@' found in map.");
+
+            // Каждая клетка имеет размер 2 м, центр клетки: (col*2+1, row*2+1)
+            float startX = startCol * 2 + 1;
+            float startZ = startRow * 2 + 1;
+            // Высота глаз – 1.7 м
+
+            float CameraHeight = AppConfig.GetCameraHeight();
+            return new Vector3(startX, CameraHeight, startZ);
         }
     }
 }

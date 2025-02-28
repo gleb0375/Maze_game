@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using System;
+using System.Globalization;
 
 namespace semestral_work.Config
 {
@@ -18,9 +19,6 @@ namespace semestral_work.Config
                 .Build();
         }
 
-        public static string GetMapFilePath() =>
-            Configuration["MapConfig:FilePath"] ?? throw new Exception("Map file path is not configured in appsettings.json.");
-
         public static (int Width, int Height) GetWindowDimensions()
         {
             if (!int.TryParse(Configuration["Window:Width"], out int width))
@@ -33,6 +31,8 @@ namespace semestral_work.Config
             }
             return (width, height);
         }
+        public static string GetMapFilePath() =>
+            Configuration["MapConfig:FilePath"] ?? throw new Exception("Map file path is not configured in appsettings.json.");
 
         public static string GetVertexShaderPath() =>
             Configuration["ShaderConfig:VertexShaderPath"] ?? throw new Exception("Vertex shader path is not configured.");
@@ -45,5 +45,15 @@ namespace semestral_work.Config
 
         public static string GetWallTexturePath() =>
             Configuration["TextureConfig:WallTexturePath"] ?? throw new Exception("Wall texture path is not configured.");
+
+        public static float GetCameraHeight()
+        {
+            string heightStr = Configuration["Camera:Height"];
+            if (!float.TryParse(heightStr, NumberStyles.Float, CultureInfo.InvariantCulture, out float height))
+            {
+                throw new Exception("Invalid Camera:Height value in appsettings.json: " + heightStr);
+            }
+            return height;
+        }
     }
 }
