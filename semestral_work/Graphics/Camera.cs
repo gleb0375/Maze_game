@@ -14,7 +14,7 @@ namespace semestral_work.Graphics
         public float SCREENHEIGHT;
 
         // Скорость бега и чувствительность мыши
-        private float SPEED = 2.5f;          // 1.4 м/с по заданию
+        private float SPEED = 1.4f;          // 1.4 м/с по заданию
         private float SENSITIVITY = 20f;
 
         // Текущая позиция камеры в мире
@@ -192,6 +192,50 @@ namespace semestral_work.Graphics
                 // Запрещаем — ничего не делаем или можно частично откатиться
             }
         }
+
+        //public (Vector3 position, Vector3 direction) GetFlashlightParams()
+        //{
+        //    // Позиция фонарика: (камера.x, 2.05, камера.z)
+        //    // Но можно добавить ещё небольшой отступ вперёд, если хотите.
+        //    var flashlightPos = new Vector3(position.X, 2.05f, position.Z);
+
+        //    // Направление фонарика = направление камеры, 
+        //    // но опущенный на 2° вниз относительно текущего pitch.
+        //    // Можно просто сделать pitchFlashlight = pitch + 2.
+        //    float pitchFlashlight = pitch + 2f; // опускаем на 2°
+        //    float yawFlashlight = yaw;
+
+        //    // Рассчитываем direction
+        //    Vector3 dir;
+        //    dir.X = MathF.Cos(MathHelper.DegreesToRadians(pitchFlashlight))
+        //          * MathF.Cos(MathHelper.DegreesToRadians(yawFlashlight));
+        //    dir.Y = MathF.Sin(MathHelper.DegreesToRadians(pitchFlashlight));
+        //    dir.Z = MathF.Cos(MathHelper.DegreesToRadians(pitchFlashlight))
+        //          * MathF.Sin(MathHelper.DegreesToRadians(yawFlashlight));
+        //    dir = Vector3.Normalize(dir);
+
+        //    return (flashlightPos, dir);
+        //}
+
+        public (Vector3 position, Vector3 direction) GetFlashlightParams()
+        {
+            // Фонарик находится на высоте 2.05 м
+            var flashlightPos = new Vector3(position.X, 2.05f, position.Z);
+
+            // Если хотите, чтобы луч немного опускался, можно использовать pitch - 2°:
+            float pitchFlashlight = pitch - 2f;
+            float yawFlashlight = yaw;
+
+            Vector3 dir;
+            dir.X = MathF.Cos(MathHelper.DegreesToRadians(pitchFlashlight)) * MathF.Cos(MathHelper.DegreesToRadians(yawFlashlight));
+            dir.Y = MathF.Sin(MathHelper.DegreesToRadians(pitchFlashlight));
+            dir.Z = MathF.Cos(MathHelper.DegreesToRadians(pitchFlashlight)) * MathF.Sin(MathHelper.DegreesToRadians(yawFlashlight));
+            dir = Vector3.Normalize(dir);
+
+            return (flashlightPos, dir);
+        }
+
+
 
 
         // Вызывается из OnUpdateFrame
