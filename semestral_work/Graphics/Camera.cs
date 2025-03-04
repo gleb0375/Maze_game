@@ -1,6 +1,7 @@
 ﻿using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
+using semestral_work.Config;
 using semestral_work.Map;
 using System;
 using GLKeys = OpenTK.Windowing.GraphicsLibraryFramework.Keys;
@@ -9,15 +10,9 @@ namespace semestral_work.Graphics
 {
     internal class Camera
     {
-        // Public, чтобы их можно было менять извне (например, при OnResize)
-        public float SCREENWIDTH;
-        public float SCREENHEIGHT;
+        public float screenWidth;
+        public float screenHeight;
 
-        // Скорость бега и чувствительность мыши
-        private float SPEED = 1.4f;          // 1.4 м/с по заданию
-        private float SENSITIVITY = 20f;
-
-        // Текущая позиция камеры в мире
         public Vector3 position;
 
         // Ориентация
@@ -39,8 +34,8 @@ namespace semestral_work.Graphics
 
         public Camera(float width, float height, Vector3 position, ParsedMap map)
         {
-            SCREENWIDTH = width;
-            SCREENHEIGHT = height;
+            screenWidth = width;
+            screenHeight = height;
             this.position = position;
             _map = map;
         }
@@ -56,7 +51,7 @@ namespace semestral_work.Graphics
         {
             return Matrix4.CreatePerspectiveFieldOfView(
                 MathHelper.DegreesToRadians(45.0f),
-                SCREENWIDTH / SCREENHEIGHT,
+                screenWidth / screenHeight,
                 0.1f,
                 100.0f);
         }
@@ -86,6 +81,10 @@ namespace semestral_work.Graphics
         // Обрабатываем нажатия клавиш и движение мыши
         private void InputController(KeyboardState input, MouseState mouse, FrameEventArgs e)
         {
+            // Читаем настройки из конфигурации
+            float speed = AppConfig.GetMovementSpeed();
+            float sensitivity = AppConfig.GetMouseSensivity();
+
             Vector2 inputDir = Vector2.Zero;
 
             if (input.IsKeyDown(GLKeys.W)) inputDir.Y += 1f;
@@ -100,13 +99,13 @@ namespace semestral_work.Graphics
             var horizontalRight = Vector3.Normalize(Vector3.Cross(horizontalFront, Vector3.UnitY));
 
             // Итоговый 3D-вектор движения
-            Vector3 move = (horizontalFront * inputDir.Y + horizontalRight * inputDir.X) * (SPEED * (float)e.Time);
+            Vector3 move = (horizontalFront * inputDir.Y + horizontalRight * inputDir.X) * (speed * (float)e.Time);
 
             // Пытаемся переместиться 
             Vector3 newPosition = position + move;
             TryMove(newPosition);
 
-            // Мышь — всё без изменений
+            // Обработка мыши
             if (firstMove)
             {
                 lastPos = new Vector2(mouse.X, mouse.Y);
@@ -118,13 +117,14 @@ namespace semestral_work.Graphics
                 float deltaY = mouse.Y - lastPos.Y;
                 lastPos = new Vector2(mouse.X, mouse.Y);
 
-                yaw += deltaX * SENSITIVITY * (float)e.Time;
-                pitch -= deltaY * SENSITIVITY * (float)e.Time;
+                yaw += deltaX * sensitivity * (float)e.Time;
+                pitch -= deltaY * sensitivity * (float)e.Time;
             }
 
             UpdateVectors();
-            position.Y = 1.7f; // фиксируем высоту
+            //position.Y = 1.7f; // фиксируем высоту
         }
+
 
 
         private bool CanWalkAt(Vector2 newPos2D)
@@ -179,51 +179,26 @@ namespace semestral_work.Graphics
 
         private void TryMove(Vector3 newPos)
         {
-            // Мы учитываем только X,Z; Y фиксирована = 1.7.
             Vector2 newPos2D = new Vector2(newPos.X, newPos.Z);
 
             if (CanWalkAt(newPos2D))
             {
-                // Разрешаем
                 position = newPos;
             }
             else
             {
-                // Запрещаем — ничего не делаем или можно частично откатиться
+               
             }
         }
 
-        //public (Vector3 position, Vector3 direction) GetFlashlightParams()
-        //{
-        //    // Позиция фонарика: (камера.x, 2.05, камера.z)
-        //    // Но можно добавить ещё небольшой отступ вперёд, если хотите.
-        //    var flashlightPos = new Vector3(position.X, 2.05f, position.Z);
-
-        //    // Направление фонарика = направление камеры, 
-        //    // но опущенный на 2° вниз относительно текущего pitch.
-        //    // Можно просто сделать pitchFlashlight = pitch + 2.
-        //    float pitchFlashlight = pitch + 2f; // опускаем на 2°
-        //    float yawFlashlight = yaw;
-
-        //    // Рассчитываем direction
-        //    Vector3 dir;
-        //    dir.X = MathF.Cos(MathHelper.DegreesToRadians(pitchFlashlight))
-        //          * MathF.Cos(MathHelper.DegreesToRadians(yawFlashlight));
-        //    dir.Y = MathF.Sin(MathHelper.DegreesToRadians(pitchFlashlight));
-        //    dir.Z = MathF.Cos(MathHelper.DegreesToRadians(pitchFlashlight))
-        //          * MathF.Sin(MathHelper.DegreesToRadians(yawFlashlight));
-        //    dir = Vector3.Normalize(dir);
-
-        //    return (flashlightPos, dir);
-        //}
-
         public (Vector3 position, Vector3 direction) GetFlashlightParams()
         {
-            // Фонарик находится на высоте 2.05 м
-            var flashlightPos = new Vector3(position.X, 2.05f, position.Z);
+            float lightHeight = AppConfig.GetLightHeight();
+            var flashlightPos = new Vector3(position.X, lightHeight, position.Z);
 
             // Если хотите, чтобы луч немного опускался, можно использовать pitch - 2°:
-            float pitchFlashlight = pitch - 2f;
+            float angleOfDepression = AppConfig.GetAngleOfDepression();
+            float pitchFlashlight = pitch - angleOfDepression;
             float yawFlashlight = yaw;
 
             Vector3 dir;
@@ -235,10 +210,6 @@ namespace semestral_work.Graphics
             return (flashlightPos, dir);
         }
 
-
-
-
-        // Вызывается из OnUpdateFrame
         public void Update(KeyboardState input, MouseState mouse, FrameEventArgs e)
         {
             InputController(input, mouse, e);

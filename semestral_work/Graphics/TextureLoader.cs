@@ -1,17 +1,18 @@
-﻿using OpenTK.Graphics.OpenGL4;
+﻿using System;
+using System.IO;
+using OpenTK.Graphics.OpenGL4;
 using Serilog;
 using StbImageSharp;
-using System;
-using System.IO;
 
 namespace semestral_work.Graphics
 {
     internal static class TextureLoader
     {
         /// <summary>
-        /// Загружает текстуру из указанного файла (jpg, png и т.д.).
-        /// Возвращает дескриптор текстуры OpenGL.
+        /// Loads a texture from the specified file (e.g., jpg, png) and returns the OpenGL texture handle.
         /// </summary>
+        /// <param name="path">Path to the texture file.</param>
+        /// <returns>OpenGL texture handle.</returns>
         public static int LoadTexture(string path)
         {
             if (!File.Exists(path))
@@ -20,17 +21,19 @@ namespace semestral_work.Graphics
                 throw new FileNotFoundException($"Texture file not found: {path}");
             }
 
-            // Считываем файл в массив байт
+            // Read file into a byte array
             byte[] fileBytes = File.ReadAllBytes(path);
+            Log.Information("Read texture file bytes from {Path}", path);
 
-            // Используем StbImageSharp для чтения пикселей
+            // Use StbImageSharp to load image data with RGBA components
             var image = ImageResult.FromMemory(fileBytes, ColorComponents.RedGreenBlueAlpha);
+            Log.Information("Image loaded: {Width}x{Height}", image.Width, image.Height);
 
-            // Генерируем текстуру в OpenGL
+            // Generate an OpenGL texture
             int textureHandle = GL.GenTexture();
             GL.BindTexture(TextureTarget.Texture2D, textureHandle);
 
-            // Загружаем данные
+            // Upload image data to the texture
             GL.TexImage2D(TextureTarget.Texture2D,
                 level: 0,
                 internalformat: PixelInternalFormat.Rgba,
@@ -41,13 +44,15 @@ namespace semestral_work.Graphics
                 type: PixelType.UnsignedByte,
                 pixels: image.Data);
 
-            // Настраиваем фильтрацию и повторение (wrap)
+            // Set texture filtering parameters
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
 
+            // Set texture wrapping parameters
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
 
+            // Unbind the texture
             GL.BindTexture(TextureTarget.Texture2D, 0);
 
             Log.Information("Texture loaded successfully: {Path}", path);

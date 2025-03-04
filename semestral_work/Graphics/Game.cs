@@ -111,8 +111,8 @@ namespace semestral_work.Graphics
             base.OnResize(e);
             GL.Viewport(0, 0, e.Width, e.Height);
 
-            _camera.SCREENWIDTH = e.Width;
-            _camera.SCREENHEIGHT = e.Height;
+            _camera.screenWidth = e.Width;
+            _camera.screenHeight = e.Height;
         }
 
         protected override void OnUpdateFrame(FrameEventArgs args)

@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
-using System;
 using System.Globalization;
+using Serilog;
 
 namespace semestral_work.Config
 {
@@ -11,12 +11,14 @@ namespace semestral_work.Config
         public static void Init()
         {
             LoadConfiguration();
+            Log.Information("AppConfig initialized.");
         }
         public static void LoadConfiguration()
         {
             Configuration = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                 .Build();
+            Log.Information("Configuration loaded successfully from appsettings.json.");
         }
 
         public static (int Width, int Height) GetWindowDimensions()
@@ -29,6 +31,7 @@ namespace semestral_work.Config
             {
                 throw new Exception("Invalid Window:Height value in appsettings.json");
             }
+            Log.Information("Window dimensions read: {Width}x{Height}", width, height);
             return (width, height);
         }
         public static string GetMapFilePath() =>
@@ -53,7 +56,52 @@ namespace semestral_work.Config
             {
                 throw new Exception("Invalid Camera:Height value in appsettings.json: " + heightStr);
             }
+            Log.Information("Camera height read: {Height}", height);
             return height;
+        }
+
+        public static float GetLightHeight()
+        {
+            string lightHeightStr = Configuration["Camera:LightHeight"];
+            if (!float.TryParse(lightHeightStr, NumberStyles.Float, CultureInfo.InvariantCulture, out float lightHeight))
+            {
+                throw new Exception("Invalid Camera:LightHeight value in appsettings.json: " + lightHeightStr);
+            }
+            //Log.Information("Light height read: {LightHeight}", lightHeight);
+            return lightHeight;
+        }
+
+        public static float GetAngleOfDepression()
+        {
+            string angleOfDepressionStr = Configuration["Camera:AngleOfDepression"];
+            if (!float.TryParse(angleOfDepressionStr, NumberStyles.Float, CultureInfo.InvariantCulture, out float angleOfDepression))
+            {
+                throw new Exception("Invalid Camera:AngleOfDepression value in appsettings.json: " + angleOfDepressionStr);
+            }
+            //Log.Information("Angle of depression read: {Angle}", angleOfDepression);
+            return angleOfDepression;
+        }
+
+        public static float GetMouseSensivity()
+        {
+            string mouseSensivityStr = Configuration["Mouse:Sensivity"];
+            if (!float.TryParse(mouseSensivityStr, NumberStyles.Float, CultureInfo.InvariantCulture, out float mouseSensivity))
+            {
+                throw new Exception("Invalid Mouse:Sensivity value in appsettings.json: " + mouseSensivityStr);
+            }
+            //Log.Information("Mouse sensitivity read: {Sensitivity}", mouseSensivity);
+            return mouseSensivity;
+        }
+
+        public static float GetMovementSpeed()
+        {
+            string movementSpeedStr = Configuration["Movement:Speed"];
+            if (!float.TryParse(movementSpeedStr, NumberStyles.Float, CultureInfo.InvariantCulture, out float movementSpeed))
+            {
+                throw new Exception("Invalid Mouse:Sensivity value in appsettings.json: " + movementSpeedStr);
+            }
+            //Log.Information("Movement speed read: {Speed}", movementSpeed);
+            return movementSpeed;
         }
     }
 }
