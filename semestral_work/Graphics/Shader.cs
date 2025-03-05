@@ -8,11 +8,10 @@ namespace semestral_work.Graphics
     {
         public int Handle { get; private set; }
 
-        // Создаём шейдер из кода вершинного и фрагментного шейдера
         public Shader(string vertexCode, string fragmentCode)
         {
-            Log.Information("Vertex shader code:\n{0}", vertexCode);
-            Log.Information("Fragment shader code:\n{0}", fragmentCode);
+            //Log.Information("Vertex shader code:\n{0}", vertexCode);
+            //Log.Information("Fragment shader code:\n{0}", fragmentCode);
 
             int vertexShader = CompileShader(ShaderType.VertexShader, vertexCode);
             int fragmentShader = CompileShader(ShaderType.FragmentShader, fragmentCode);
