@@ -6,31 +6,28 @@ namespace semestral_work.Graphics
 {
     internal class Shader : IDisposable
     {
-        public int Handle { get; private set; }
+        public int handle { get; private set; }
 
         public Shader(string vertexCode, string fragmentCode)
         {
-            //Log.Information("Vertex shader code:\n{0}", vertexCode);
-            //Log.Information("Fragment shader code:\n{0}", fragmentCode);
-
             int vertexShader = CompileShader(ShaderType.VertexShader, vertexCode);
             int fragmentShader = CompileShader(ShaderType.FragmentShader, fragmentCode);
 
-            Handle = GL.CreateProgram();
-            GL.AttachShader(Handle, vertexShader);
-            GL.AttachShader(Handle, fragmentShader);
-            GL.LinkProgram(Handle);
+            handle = GL.CreateProgram();
+            GL.AttachShader(handle, vertexShader);
+            GL.AttachShader(handle, fragmentShader);
+            GL.LinkProgram(handle);
 
-            GL.GetProgram(Handle, GetProgramParameterName.LinkStatus, out int linkStatus);
+            GL.GetProgram(handle, GetProgramParameterName.LinkStatus, out int linkStatus);
             if (linkStatus == 0)
             {
-                string infoLog = GL.GetProgramInfoLog(Handle);
+                string infoLog = GL.GetProgramInfoLog(handle);
                 Log.Error("Program link error: {Error}", infoLog);
                 throw new Exception($"Program link error: {infoLog}");
             }
 
-            GL.DetachShader(Handle, vertexShader);
-            GL.DetachShader(Handle, fragmentShader);
+            GL.DetachShader(handle, vertexShader);
+            GL.DetachShader(handle, fragmentShader);
             GL.DeleteShader(vertexShader);
             GL.DeleteShader(fragmentShader);
         }
@@ -52,11 +49,11 @@ namespace semestral_work.Graphics
             return shader;
         }
 
-        public void Use() => GL.UseProgram(Handle);
+        public void Use() => GL.UseProgram(handle);
 
         public void Dispose()
         {
-            GL.DeleteProgram(Handle);
+            GL.DeleteProgram(handle);
         }
     }
 }

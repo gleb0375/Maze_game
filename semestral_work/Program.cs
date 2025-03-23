@@ -35,7 +35,7 @@ namespace semestral_work
             // Set up native window settings
             var nativeSettings = new NativeWindowSettings()
             {
-                Size = new Vector2i(width, height),
+                ClientSize = new Vector2i(width, height),
                 WindowBorder = OpenTK.Windowing.Common.WindowBorder.Resizable,
                 Title = "Maze Game"
             };

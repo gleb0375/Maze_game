@@ -51,55 +51,70 @@ namespace semestral_work.Config
 
         public static float GetCameraHeight()
         {
-            string heightStr = Configuration["Camera:Height"];
+            string heightStr = Configuration["Camera:Height"]
+                ?? throw new Exception("Camera:Height is not configured in appsettings.json.");
+
             if (!float.TryParse(heightStr, NumberStyles.Float, CultureInfo.InvariantCulture, out float height))
             {
                 throw new Exception("Invalid Camera:Height value in appsettings.json: " + heightStr);
             }
+
             Log.Information("Camera height read: {Height}", height);
             return height;
         }
 
         public static float GetLightHeight()
         {
-            string lightHeightStr = Configuration["Camera:LightHeight"];
+            string lightHeightStr = Configuration["Camera:LightHeight"]
+                ?? throw new Exception("Camera:LightHeight is not configured in appsettings.json.");
+
             if (!float.TryParse(lightHeightStr, NumberStyles.Float, CultureInfo.InvariantCulture, out float lightHeight))
             {
                 throw new Exception("Invalid Camera:LightHeight value in appsettings.json: " + lightHeightStr);
             }
+
             Log.Information("Light height read: {LightHeight}", lightHeight);
             return lightHeight;
         }
 
         public static float GetAngleOfDepression()
         {
-            string angleOfDepressionStr = Configuration["Camera:AngleOfDepression"];
+            string angleOfDepressionStr = Configuration["Camera:AngleOfDepression"]
+                ?? throw new Exception("Camera:AngleOfDepression is not configured in appsettings.json.");
+
             if (!float.TryParse(angleOfDepressionStr, NumberStyles.Float, CultureInfo.InvariantCulture, out float angleOfDepression))
             {
                 throw new Exception("Invalid Camera:AngleOfDepression value in appsettings.json: " + angleOfDepressionStr);
             }
+
             Log.Information("Angle of depression read: {Angle}", angleOfDepression);
             return angleOfDepression;
         }
 
         public static float GetMouseSensivity()
         {
-            string mouseSensivityStr = Configuration["Mouse:Sensivity"];
+            string mouseSensivityStr = Configuration["Mouse:Sensivity"]
+                ?? throw new Exception("Mouse:Sensivity is not configured in appsettings.json.");
+
             if (!float.TryParse(mouseSensivityStr, NumberStyles.Float, CultureInfo.InvariantCulture, out float mouseSensivity))
             {
                 throw new Exception("Invalid Mouse:Sensivity value in appsettings.json: " + mouseSensivityStr);
             }
+
             Log.Information("Mouse sensitivity read: {Sensitivity}", mouseSensivity);
             return mouseSensivity;
         }
 
         public static float GetMovementSpeed()
         {
-            string movementSpeedStr = Configuration["Movement:Speed"];
+            string movementSpeedStr = Configuration["Movement:Speed"]
+                ?? throw new Exception("Movement:Speed is not configured in appsettings.json.");
+
             if (!float.TryParse(movementSpeedStr, NumberStyles.Float, CultureInfo.InvariantCulture, out float movementSpeed))
             {
-                throw new Exception("Invalid Mouse:Sensivity value in appsettings.json: " + movementSpeedStr);
+                throw new Exception("Invalid Movement:Speed value in appsettings.json: " + movementSpeedStr);
             }
+
             Log.Information("Movement speed read: {Speed}", movementSpeed);
             return movementSpeed;
         }

@@ -80,7 +80,7 @@ namespace semestral_work.Graphics
 
             // Настраиваем uniform для текстуры (uTexture=0)
             _shader.Use();
-            int texLoc = GL.GetUniformLocation(_shader.Handle, "uTexture");
+            int texLoc = GL.GetUniformLocation(_shader.handle, "uTexture");
             GL.Uniform1(texLoc, 0);
 
             // 5) Генерируем матрицы для стен
@@ -146,10 +146,15 @@ namespace semestral_work.Graphics
         {
             base.OnRenderFrame(args);
 
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            if (_shader == null)
+            {
+                Log.Error("shader is NULL!");
+                throw new InvalidOperationException("Shader not initialized before rendering.");
+            }
 
-            // Активируем шейдер
-            _shader?.Use();
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);           
+
+            _shader.Use();
 
             // =============== Спотлайт-параметры ===============
             var (flashPos, flashDir) = _camera.GetFlashlightParams();
@@ -157,9 +162,9 @@ namespace semestral_work.Graphics
             float cutoffDeg = 20f;
             float cutoffCos = MathF.Cos(MathHelper.DegreesToRadians(cutoffDeg));
 
-            int locLightPos = GL.GetUniformLocation(_shader.Handle, "uLightPos");
-            int locLightDir = GL.GetUniformLocation(_shader.Handle, "uLightDir");
-            int locSpotCut = GL.GetUniformLocation(_shader.Handle, "uSpotCutoff");
+            int locLightPos = GL.GetUniformLocation(_shader.handle, "uLightPos");
+            int locLightDir = GL.GetUniformLocation(_shader.handle, "uLightDir");
+            int locSpotCut = GL.GetUniformLocation(_shader.handle, "uSpotCutoff");
 
             if (locLightPos >= 0) GL.Uniform3(locLightPos, flashPos);
             if (locLightDir >= 0) GL.Uniform3(locLightDir, flashDir);
@@ -169,8 +174,8 @@ namespace semestral_work.Graphics
             Matrix4 view = _camera.GetViewMatrix();
             Matrix4 proj = _camera.GetProjectionMatrix();
 
-            int uModelLoc = GL.GetUniformLocation(_shader.Handle, "uModel");
-            int uMVPLoc = GL.GetUniformLocation(_shader.Handle, "uMVP");
+            int uModelLoc = GL.GetUniformLocation(_shader.handle, "uModel");
+            int uMVPLoc = GL.GetUniformLocation(_shader.handle, "uMVP");
 
             // ----- Рисуем пол -----
             Matrix4 floorModel = Matrix4.Identity;
