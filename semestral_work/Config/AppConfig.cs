@@ -67,7 +67,7 @@ namespace semestral_work.Config
             {
                 throw new Exception("Invalid Camera:LightHeight value in appsettings.json: " + lightHeightStr);
             }
-            //Log.Information("Light height read: {LightHeight}", lightHeight);
+            Log.Information("Light height read: {LightHeight}", lightHeight);
             return lightHeight;
         }
 
@@ -78,7 +78,7 @@ namespace semestral_work.Config
             {
                 throw new Exception("Invalid Camera:AngleOfDepression value in appsettings.json: " + angleOfDepressionStr);
             }
-            //Log.Information("Angle of depression read: {Angle}", angleOfDepression);
+            Log.Information("Angle of depression read: {Angle}", angleOfDepression);
             return angleOfDepression;
         }
 
@@ -89,7 +89,7 @@ namespace semestral_work.Config
             {
                 throw new Exception("Invalid Mouse:Sensivity value in appsettings.json: " + mouseSensivityStr);
             }
-            //Log.Information("Mouse sensitivity read: {Sensitivity}", mouseSensivity);
+            Log.Information("Mouse sensitivity read: {Sensitivity}", mouseSensivity);
             return mouseSensivity;
         }
 
@@ -100,7 +100,7 @@ namespace semestral_work.Config
             {
                 throw new Exception("Invalid Mouse:Sensivity value in appsettings.json: " + movementSpeedStr);
             }
-            //Log.Information("Movement speed read: {Speed}", movementSpeed);
+            Log.Information("Movement speed read: {Speed}", movementSpeed);
             return movementSpeed;
         }
     }

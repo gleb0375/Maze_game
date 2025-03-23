@@ -1,7 +1,6 @@
 ﻿using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
-using semestral_work.Config;
 using semestral_work.Map;
 using System;
 using GLKeys = OpenTK.Windowing.GraphicsLibraryFramework.Keys;
@@ -10,42 +9,70 @@ namespace semestral_work.Graphics
 {
     internal class Camera
     {
-        // Screen size (for projection)
+        // Screen dimensions for projection
         public float screenWidth;
         public float screenHeight;
 
-        // Current camera position in world space
+        // Camera position
         public Vector3 position;
 
-        // Orientation vectors
+        // Orientation
         private Vector3 up = Vector3.UnitY;
         private Vector3 front = -Vector3.UnitZ;
         private Vector3 right = Vector3.UnitX;
 
-        // Angles for pitch and yaw
+        // Angles
         private float pitch;
-        private float yaw = -90.0f; // Facing -Z by default
+        private float yaw = -90.0f;
 
-        // Mouse control
+        // Mouse
         private bool firstMove = true;
         public Vector2 lastPos;
 
-        // Map for collision checks
+        // Map for collisions
         private ParsedMap _map;
 
-        // Player radius for bounding-box collision
+        // Player collision radius
         private float playerRadius = 0.3f;
 
-        public Camera(float width, float height, Vector3 position, ParsedMap map)
+        // Configuration values passed via constructor (once)
+        private float movementSpeed;
+        private float mouseSensitivity;
+        private float lightHeight;
+        private float angleOfDepression;
+
+        public Camera(
+            float width,
+            float height,
+            Vector3 startPosition,
+            ParsedMap map,
+            float movementSpeed,
+            float mouseSensitivity,
+            float lightHeight,
+            float angleOfDepression)
         {
             screenWidth = width;
             screenHeight = height;
-            this.position = position;
+            position = startPosition;
             _map = map;
+
+            // Save config values to private fields
+            this.movementSpeed = movementSpeed;
+            this.mouseSensitivity = mouseSensitivity;
+            this.lightHeight = lightHeight;
+            this.angleOfDepression = angleOfDepression;
         }
 
         /// <summary>
-        /// Returns the view matrix (camera orientation) based on current position and front/up vectors.
+        /// Updates the camera each frame.
+        /// </summary>
+        public void Update(KeyboardState input, MouseState mouse, FrameEventArgs e)
+        {
+            InputController(input, mouse, e);
+        }
+
+        /// <summary>
+        /// Returns the view matrix.
         /// </summary>
         public Matrix4 GetViewMatrix()
         {
@@ -53,7 +80,7 @@ namespace semestral_work.Graphics
         }
 
         /// <summary>
-        /// Returns the projection matrix with a fixed 45° FOV, using the current screen width/height.
+        /// Returns the projection matrix for a 45° FOV using current screen size.
         /// </summary>
         public Matrix4 GetProjectionMatrix()
         {
@@ -65,35 +92,10 @@ namespace semestral_work.Graphics
         }
 
         /// <summary>
-        /// Updates front, right, and up vectors based on pitch and yaw angles.
-        /// Ensures pitch stays in [-89°, 89°] to avoid flipping.
-        /// </summary>
-        private void UpdateVectors()
-        {
-            if (pitch > 89.0f)
-                pitch = 89.0f;
-            if (pitch < -89.0f)
-                pitch = -89.0f;
-
-            front.X = MathF.Cos(MathHelper.DegreesToRadians(pitch)) * MathF.Cos(MathHelper.DegreesToRadians(yaw));
-            front.Y = MathF.Sin(MathHelper.DegreesToRadians(pitch));
-            front.Z = MathF.Cos(MathHelper.DegreesToRadians(pitch)) * MathF.Sin(MathHelper.DegreesToRadians(yaw));
-            front = Vector3.Normalize(front);
-
-            right = Vector3.Normalize(Vector3.Cross(front, Vector3.UnitY));
-            up = Vector3.Normalize(Vector3.Cross(right, front));
-        }
-
-        /// <summary>
-        /// Processes keyboard input for movement, mouse input for orientation, and applies collisions.
+        /// Processes keyboard/mouse input and applies collisions (with sliding).
         /// </summary>
         private void InputController(KeyboardState input, MouseState mouse, FrameEventArgs e)
         {
-            // Retrieve speed & mouse sensitivity from config
-            float speed = AppConfig.GetMovementSpeed();
-            float sensitivity = AppConfig.GetMouseSensivity();
-
-            // Determine movement direction based on W, A, S, D
             Vector2 inputDir = Vector2.Zero;
             if (input.IsKeyDown(GLKeys.W)) inputDir.Y += 1f;
             if (input.IsKeyDown(GLKeys.S)) inputDir.Y -= 1f;
@@ -103,17 +105,16 @@ namespace semestral_work.Graphics
             if (inputDir.LengthSquared > 0.0001f)
                 inputDir = inputDir.Normalized();
 
-            // Project the front vector onto the XZ plane so we don't fly up or down
-            Vector3 horizontalFront = new Vector3(front.X, 0f, front.Z).Normalized();
-            Vector3 horizontalRight = Vector3.Normalize(Vector3.Cross(horizontalFront, Vector3.UnitY));
+            // Movement in XZ plane
+            Vector3 horizFront = new Vector3(front.X, 0f, front.Z).Normalized();
+            Vector3 horizRight = Vector3.Normalize(Vector3.Cross(horizFront, Vector3.UnitY));
 
-            // Movement vector = direction * speed * deltaTime
-            Vector3 move = (horizontalFront * inputDir.Y + horizontalRight * inputDir.X) * (speed * (float)e.Time);
+            Vector3 move = (horizFront * inputDir.Y + horizRight * inputDir.X)
+                         * (movementSpeed * (float)e.Time);
 
-            // Attempt to move and handle collision with "sliding" logic
             AttemptSlideMove(move);
 
-            // Mouse movement for yaw/pitch
+            // Mouse
             if (firstMove)
             {
                 lastPos = new Vector2(mouse.X, mouse.Y);
@@ -125,66 +126,63 @@ namespace semestral_work.Graphics
                 float deltaY = mouse.Y - lastPos.Y;
                 lastPos = new Vector2(mouse.X, mouse.Y);
 
-                yaw += deltaX * sensitivity * (float)e.Time;
-                pitch -= deltaY * sensitivity * (float)e.Time;
+                yaw += deltaX * mouseSensitivity * (float)e.Time;
+                pitch -= deltaY * mouseSensitivity * (float)e.Time;
             }
 
             UpdateVectors();
         }
 
         /// <summary>
-        /// Performs the attempt to move with "sliding" along walls.
-        /// If the full move is blocked, tries partial moves along X or Z to allow sliding.
+        /// Allows sliding along walls: if full movement is blocked,
+        /// attempts partial X or Z.
         /// </summary>
         private void AttemptSlideMove(Vector3 move)
         {
             Vector3 desiredPos = position + move;
 
-            // 1) Check if full movement is valid
+            // Check full
             if (CanWalkAt(new Vector2(desiredPos.X, desiredPos.Z)))
             {
                 position = desiredPos;
                 return;
             }
 
-            // 2) Full move blocked, so we try partial: X or Z axis separately
-            //    We'll store the final position in a temporary
+            // Partial
             Vector3 tempPos = position;
 
-            // 2a) Try moving along X only
+            // Check X only
             Vector3 moveX = new Vector3(desiredPos.X, position.Y, position.Z);
             if (CanWalkAt(new Vector2(moveX.X, moveX.Z)))
             {
                 tempPos.X = moveX.X;
             }
 
-            // 2b) Then try moving along Z only (with updated tempPos.X)
+            // Check Z only
             Vector3 moveZ = new Vector3(tempPos.X, position.Y, desiredPos.Z);
             if (CanWalkAt(new Vector2(moveZ.X, moveZ.Z)))
             {
                 tempPos.Z = moveZ.Z;
             }
 
-            // Assign final position after partial checks
             position = tempPos;
         }
 
         /// <summary>
-        /// Checks if the 2D position (x,z) is free of collisions with the map walls.
-        /// Also checks that it's inside map boundaries.
+        /// Checks collisions in the map (including walls and boundaries).
         /// </summary>
         private bool CanWalkAt(Vector2 newPos2D)
         {
-            // First, check boundaries
             int col = (int)MathF.Floor(newPos2D.X / 2f);
             int row = (int)MathF.Floor(newPos2D.Y / 2f);
 
+            // Check map boundaries
             if (col < 0 || col >= _map.Columns || row < 0 || row >= _map.Rows)
             {
                 return false;
             }
 
-            // Check collisions with walls
+            // Check collisions
             for (int r = 0; r < _map.Rows; r++)
             {
                 for (int c = 0; c < _map.Columns; c++)
@@ -196,13 +194,11 @@ namespace semestral_work.Graphics
                         float bottom = r * 2;
                         float top = r * 2 + 2;
 
-                        // Expand by playerRadius
                         left -= playerRadius;
                         right += playerRadius;
                         bottom -= playerRadius;
                         top += playerRadius;
 
-                        // Check bounding box
                         if (newPos2D.X >= left && newPos2D.X <= right &&
                             newPos2D.Y >= bottom && newPos2D.Y <= top)
                         {
@@ -216,15 +212,33 @@ namespace semestral_work.Graphics
         }
 
         /// <summary>
-        /// Returns a tuple (position, direction) for a flashlight held at a certain height
-        /// and depressed angle relative to the player's pitch.
+        /// Updates orientation vectors (front, right, up) based on pitch/yaw.
+        /// </summary>
+        private void UpdateVectors()
+        {
+            if (pitch > 89.0f) pitch = 89.0f;
+            if (pitch < -89.0f) pitch = -89.0f;
+
+            front.X = MathF.Cos(MathHelper.DegreesToRadians(pitch))
+                    * MathF.Cos(MathHelper.DegreesToRadians(yaw));
+            front.Y = MathF.Sin(MathHelper.DegreesToRadians(pitch));
+            front.Z = MathF.Cos(MathHelper.DegreesToRadians(pitch))
+                    * MathF.Sin(MathHelper.DegreesToRadians(yaw));
+            front = Vector3.Normalize(front);
+
+            right = Vector3.Normalize(Vector3.Cross(front, Vector3.UnitY));
+            up = Vector3.Normalize(Vector3.Cross(right, front));
+        }
+
+        /// <summary>
+        /// Returns (position, direction) for the player's flashlight.
+        /// Depresses pitch by angleOfDepression to tilt downward.
         /// </summary>
         public (Vector3 position, Vector3 direction) GetFlashlightParams()
         {
-            float lightHeight = AppConfig.GetLightHeight();
+            // The flashlight is at "lightHeight" above the player's X,Z
             Vector3 flashlightPos = new Vector3(position.X, lightHeight, position.Z);
 
-            float angleOfDepression = AppConfig.GetAngleOfDepression();
             float pitchFlashlight = pitch - angleOfDepression;
             float yawFlashlight = yaw;
 
@@ -237,14 +251,6 @@ namespace semestral_work.Graphics
             dir = Vector3.Normalize(dir);
 
             return (flashlightPos, dir);
-        }
-
-        /// <summary>
-        /// Updates camera by processing input and collisions.
-        /// </summary>
-        public void Update(KeyboardState input, MouseState mouse, FrameEventArgs e)
-        {
-            InputController(input, mouse, e);
         }
     }
 }

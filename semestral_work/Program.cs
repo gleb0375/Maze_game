@@ -1,11 +1,11 @@
 using Microsoft.Extensions.Configuration;
 using semestral_work.Config;
 using semestral_work.Map;
-using System;
-using Serilog;
 using semestral_work.Graphics;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Desktop;
+using Serilog;
+using System;
 
 namespace semestral_work
 {
@@ -16,26 +16,32 @@ namespace semestral_work
             AppConfig.Init();
             LoggerSetup.InitializeLogger();
 
+            // Parse the map once
             ParsedMap map = MapParser.ParseMap();
 
-            // Получаем стартовую позицию игрока из карты
-            Vector3 cameraStartPosition = GetPlayerStartPosition(map);
-
+            // Get window dimensions from configuration
             (int width, int height) = AppConfig.GetWindowDimensions();
+            float movementSpeed = AppConfig.GetMovementSpeed();
+            float mouseSens = AppConfig.GetMouseSensivity();
+            float lightHeight = AppConfig.GetLightHeight();
+            float angleDep = AppConfig.GetAngleOfDepression();
 
-            // Создаём камеру, передавая карту (можно использовать для коллизий и т.д.)
-            var camera = new Camera(width, height, cameraStartPosition, map);
+            // Determine the player's starting position from the map
+            Vector3 playerStart = GetPlayerStartPosition(map);
 
-            // Настраиваем параметры окна
+            // Create the camera directly
+            Camera camera = new Camera(width, height, playerStart, map, movementSpeed, mouseSens, lightHeight, angleDep);
+
+            // Set up native window settings
             var nativeSettings = new NativeWindowSettings()
             {
                 Size = new Vector2i(width, height),
                 WindowBorder = OpenTK.Windowing.Common.WindowBorder.Resizable,
                 Title = "Maze Game"
             };
-            var gameWindowSettings = GameWindowSettings.Default;
 
-            using (var game = new Game(gameWindowSettings, nativeSettings, map, camera))
+            // Create and run the game directly
+            using (Game game = new Game(GameWindowSettings.Default, nativeSettings, map, camera))
             {
                 game.Run();
             }
@@ -44,8 +50,8 @@ namespace semestral_work
         }
 
         /// <summary>
-        /// Ищет в ParsedMap ячейку PlayerStart и возвращает мировые координаты центра этой клетки.
-        /// Если ячейка не найдена, выбрасывает исключение.
+        /// Searches the parsed map for the PlayerStart cell and returns the world coordinates
+        /// of the center of that cell. Throws an exception if not found.
         /// </summary>
         private static Vector3 GetPlayerStartPosition(ParsedMap map)
         {
@@ -68,13 +74,12 @@ namespace semestral_work
             if (startRow == -1 || startCol == -1)
                 throw new Exception("No player start '@' found in map.");
 
-            // Каждая клетка имеет размер 2 м, центр клетки: (col*2+1, row*2+1)
+            // Each cell is 2 meters; the center is at (col * 2 + 1, row * 2 + 1)
             float startX = startCol * 2 + 1;
             float startZ = startRow * 2 + 1;
-            // Высота глаз – 1.7 м
+            float cameraHeight = AppConfig.GetCameraHeight();
 
-            float CameraHeight = AppConfig.GetCameraHeight();
-            return new Vector3(startX, CameraHeight, startZ);
+            return new Vector3(startX, cameraHeight, startZ);
         }
     }
 }
