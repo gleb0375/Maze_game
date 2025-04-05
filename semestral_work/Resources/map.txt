@@ -1,6 +1,6 @@
 15x15
 ooooooooooooooo
- @            o
+o @           o
 o o o o o o o o
 o             o
 ooooo     ooooo

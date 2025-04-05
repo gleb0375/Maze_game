@@ -49,6 +49,9 @@ namespace semestral_work.Config
         public static string GetWallTexturePath() =>
             Configuration["TextureConfig:WallTexturePath"] ?? throw new Exception("Wall texture path is not configured.");
 
+        public static string GetCeilingTexturePath() =>
+          Configuration["TextureConfig:CeillingTexturePath"] ?? throw new Exception("Ceiling texture path is not configured.");
+
         public static float GetCameraHeight()
         {
             string heightStr = Configuration["Camera:Height"]

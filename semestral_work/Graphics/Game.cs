@@ -14,23 +14,28 @@ namespace semestral_work.Graphics
         private ParsedMap _map;
         private Camera _camera;
 
-        // Пол
+        // Floor
         private int _floorVao;
         private int _floorIndexCount;
 
-        // Стены
+        // Walls
         private int _wallVao;
         private List<Matrix4> _wallMatrices;
 
-        // Шейдер и текстуры
+        // Ceiling
+        private int _ceilingVao;
+        private int _ceilingIndexCount;
+
+        // Shader & Textures
         private Shader? _shader;
         private int _textureFloor;
         private int _textureWalls;
+        private int _textureCeiling;
 
-        // Скрытие/показ курсора
+        // Mouse-cursor lock
         private bool _mouseGrabbed = true;
 
-        // FPS
+        // FPS counter
         private double _accumTime;
         private int _frameCount;
         private int _fps;
@@ -51,39 +56,47 @@ namespace semestral_work.Graphics
         protected override void OnLoad()
         {
             base.OnLoad();
+
             GL.ClearColor(Color4.Black);
             Log.Information("Window loaded and OpenGL initialized.");
 
             GL.Enable(EnableCap.DepthTest);
 
-            // 1) Создаём плоскость (пол)
-            (_floorVao, _floorIndexCount) = FloorBuilder.CreateFloorVAO(_map.Rows, _map.Columns);
+            // 1) Create floor
+            (_floorVao, _floorIndexCount) = PlaneBuilder.CreatePlaneVAO(_map.Rows, _map.Columns);
 
-            // 2) Создаём VAO для стен (2×3×2)
+            // 2) Create walls
             _wallVao = BlockBuilder.CreateBlockVAO();
 
-            // 3) Загружаем шейдеры
+            // 3) Load shaders
             string vertexPath = AppConfig.GetVertexShaderPath();
             string fragmentPath = AppConfig.GetFragmentShaderPath();
             string vertexCode = File.ReadAllText(vertexPath);
             string fragmentCode = File.ReadAllText(fragmentPath);
-
-            // Создаём шейдер
             _shader = new Shader(vertexCode, fragmentCode);
 
-            // 4) Загружаем текстуры
+            // 4) Load textures
+            // floor
             string floorPath = AppConfig.GetFloorTexturePath();
             _textureFloor = TextureLoader.LoadTexture(floorPath);
 
+            // walls
             string wallPath = AppConfig.GetWallTexturePath();
             _textureWalls = TextureLoader.LoadTexture(wallPath);
 
-            // Настраиваем uniform для текстуры (uTexture=0)
+            // ceiling
+            string ceilingPath = AppConfig.GetCeilingTexturePath(); // new method
+            _textureCeiling = TextureLoader.LoadTexture(ceilingPath);
+
+            // Set the uniform for texture = 0
             _shader.Use();
-            int texLoc = GL.GetUniformLocation(_shader.handle, "uTexture");
+            int texLoc = GL.GetUniformLocation(_shader.Handle, "uTexture");
             GL.Uniform1(texLoc, 0);
 
-            // 5) Генерируем матрицы для стен
+            // 5) Create ceiling (use old builder)
+            (_ceilingVao, _ceilingIndexCount) = PlaneBuilder.CreatePlaneVAO(_map.Rows, _map.Columns);
+
+            // 6) Generate matrices for walls
             GenerateWallMatrices();
         }
 
@@ -98,7 +111,7 @@ namespace semestral_work.Graphics
                     {
                         float x = col * 2.0f + 1.0f;
                         float z = row * 2.0f + 1.0f;
-                        // Смещаем куб на (x,1.5,z) (нижняя грань на y=0)
+                        // Shift the block up by 1.5 so bottom is at y=0
                         var translation = Matrix4.CreateTranslation(x, 1.5f, z);
                         _wallMatrices.Add(translation);
                     }
@@ -119,7 +132,7 @@ namespace semestral_work.Graphics
         {
             base.OnUpdateFrame(args);
 
-            // Подсчёт FPS
+            // FPS counter
             _accumTime += args.Time;
             _frameCount++;
             if (_accumTime >= 1.0)
@@ -130,7 +143,6 @@ namespace semestral_work.Graphics
                 Title = $"Maze Game | FPS: {_fps}";
             }
 
-            // ESC => скрыть/показать курсор
             var input = KeyboardState;
             if (input.IsKeyPressed(GLKeys.Escape))
             {
@@ -138,7 +150,6 @@ namespace semestral_work.Graphics
                 CursorState = _mouseGrabbed ? CursorState.Grabbed : CursorState.Normal;
             }
 
-            // Обновляем камеру
             _camera.Update(KeyboardState, MouseState, args);
         }
 
@@ -148,39 +159,37 @@ namespace semestral_work.Graphics
 
             if (_shader == null)
             {
-                Log.Error("shader is NULL!");
+                Log.Error("Shader is NULL!");
                 throw new InvalidOperationException("Shader not initialized before rendering.");
             }
 
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);           
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
             _shader.Use();
 
-            // =============== Спотлайт-параметры ===============
+            // 1) Spotlight parameters
             var (flashPos, flashDir) = _camera.GetFlashlightParams();
-
             float cutoffDeg = 20f;
             float cutoffCos = MathF.Cos(MathHelper.DegreesToRadians(cutoffDeg));
 
-            int locLightPos = GL.GetUniformLocation(_shader.handle, "uLightPos");
-            int locLightDir = GL.GetUniformLocation(_shader.handle, "uLightDir");
-            int locSpotCut = GL.GetUniformLocation(_shader.handle, "uSpotCutoff");
+            int locLightPos = GL.GetUniformLocation(_shader.Handle, "uLightPos");
+            int locLightDir = GL.GetUniformLocation(_shader.Handle, "uLightDir");
+            int locSpotCut = GL.GetUniformLocation(_shader.Handle, "uSpotCutoff");
 
             if (locLightPos >= 0) GL.Uniform3(locLightPos, flashPos);
             if (locLightDir >= 0) GL.Uniform3(locLightDir, flashDir);
             if (locSpotCut >= 0) GL.Uniform1(locSpotCut, cutoffCos);
 
-            // =============== Матрицы ===============
+            // 2) Matrices
             Matrix4 view = _camera.GetViewMatrix();
             Matrix4 proj = _camera.GetProjectionMatrix();
 
-            int uModelLoc = GL.GetUniformLocation(_shader.handle, "uModel");
-            int uMVPLoc = GL.GetUniformLocation(_shader.handle, "uMVP");
+            int uModelLoc = GL.GetUniformLocation(_shader.Handle, "uModel");
+            int uMVPLoc = GL.GetUniformLocation(_shader.Handle, "uMVP");
 
-            // ----- Рисуем пол -----
+            // -- Render floor --
             Matrix4 floorModel = Matrix4.Identity;
             Matrix4 floorMVP = floorModel * view * proj;
-
             if (uModelLoc >= 0) GL.UniformMatrix4(uModelLoc, false, ref floorModel);
             if (uMVPLoc >= 0) GL.UniformMatrix4(uMVPLoc, false, ref floorMVP);
 
@@ -190,20 +199,27 @@ namespace semestral_work.Graphics
             GL.BindVertexArray(_floorVao);
             GL.DrawElements(PrimitiveType.Triangles, _floorIndexCount, DrawElementsType.UnsignedInt, 0);
 
-            // ----- Рисуем стены -----
+            // -- Render ceiling --
+            // we place it at y=3 (if each block is height=3)
+            Matrix4 ceilingModel = Matrix4.CreateTranslation(0f, 3f, 0f);
+            Matrix4 ceilingMVP = ceilingModel * view * proj;
+            if (uModelLoc >= 0) GL.UniformMatrix4(uModelLoc, false, ref ceilingModel);
+            if (uMVPLoc >= 0) GL.UniformMatrix4(uMVPLoc, false, ref ceilingMVP);
+
+            GL.BindTexture(TextureTarget.Texture2D, _textureCeiling);
+            GL.BindVertexArray(_ceilingVao);
+            GL.DrawElements(PrimitiveType.Triangles, _ceilingIndexCount, DrawElementsType.UnsignedInt, 0);
+
+            // -- Render walls --
             GL.BindVertexArray(_wallVao);
             GL.BindTexture(TextureTarget.Texture2D, _textureWalls);
 
-            foreach (Matrix4 matrix in _wallMatrices)
+            foreach (Matrix4 mat in _wallMatrices)
             {
-                // Локальная копия
-                Matrix4 localMatrix = matrix;
-                Matrix4 mvp = localMatrix * view * proj;
-
-                if (uModelLoc >= 0)
-                    GL.UniformMatrix4(uModelLoc, false, ref localMatrix);
-                if (uMVPLoc >= 0)
-                    GL.UniformMatrix4(uMVPLoc, false, ref mvp);
+                Matrix4 localMat = mat;
+                Matrix4 mvp = localMat * view * proj;
+                if (uModelLoc >= 0) GL.UniformMatrix4(uModelLoc, false, ref localMat);
+                if (uMVPLoc >= 0) GL.UniformMatrix4(uMVPLoc, false, ref mvp);
 
                 GL.DrawElements(PrimitiveType.Triangles, 36, DrawElementsType.UnsignedInt, 0);
             }
@@ -217,9 +233,13 @@ namespace semestral_work.Graphics
 
             GL.DeleteVertexArray(_floorVao);
             GL.DeleteVertexArray(_wallVao);
+            GL.DeleteVertexArray(_ceilingVao); 
+
             _shader?.Dispose();
+
             GL.DeleteTexture(_textureFloor);
             GL.DeleteTexture(_textureWalls);
+            GL.DeleteTexture(_textureCeiling);
         }
     }
 }

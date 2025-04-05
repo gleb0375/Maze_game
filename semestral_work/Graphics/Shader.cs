@@ -6,28 +6,28 @@ namespace semestral_work.Graphics
 {
     internal class Shader : IDisposable
     {
-        public int handle { get; private set; }
+        public int Handle { get; private set; }
 
         public Shader(string vertexCode, string fragmentCode)
         {
             int vertexShader = CompileShader(ShaderType.VertexShader, vertexCode);
             int fragmentShader = CompileShader(ShaderType.FragmentShader, fragmentCode);
 
-            handle = GL.CreateProgram();
-            GL.AttachShader(handle, vertexShader);
-            GL.AttachShader(handle, fragmentShader);
-            GL.LinkProgram(handle);
+            Handle = GL.CreateProgram();
+            GL.AttachShader(Handle, vertexShader);
+            GL.AttachShader(Handle, fragmentShader);
+            GL.LinkProgram(Handle);
 
-            GL.GetProgram(handle, GetProgramParameterName.LinkStatus, out int linkStatus);
+            GL.GetProgram(Handle, GetProgramParameterName.LinkStatus, out int linkStatus);
             if (linkStatus == 0)
             {
-                string infoLog = GL.GetProgramInfoLog(handle);
+                string infoLog = GL.GetProgramInfoLog(Handle);
                 Log.Error("Program link error: {Error}", infoLog);
                 throw new Exception($"Program link error: {infoLog}");
             }
 
-            GL.DetachShader(handle, vertexShader);
-            GL.DetachShader(handle, fragmentShader);
+            GL.DetachShader(Handle, vertexShader);
+            GL.DetachShader(Handle, fragmentShader);
             GL.DeleteShader(vertexShader);
             GL.DeleteShader(fragmentShader);
         }
@@ -49,11 +49,11 @@ namespace semestral_work.Graphics
             return shader;
         }
 
-        public void Use() => GL.UseProgram(handle);
+        public void Use() => GL.UseProgram(Handle);
 
         public void Dispose()
         {
-            GL.DeleteProgram(handle);
+            GL.DeleteProgram(Handle);
         }
     }
 }
