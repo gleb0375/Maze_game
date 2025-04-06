@@ -30,12 +30,21 @@ namespace semestral_work.Graphics
         // Poloměr hráče pro kolize
         private float playerRadius = 0.3f;
 
-        // Parametry pohybu a světla
+        // Parametry pohybu
         private float movementSpeed;
         private float mouseSensitivity;
         private float lightHeight;
         private float angleOfDepression;
 
+        private float lightCutoffDeg;
+        private float lightRange;
+
+        public float LightCutoffDeg => lightCutoffDeg;
+        public float LightRange => lightRange;
+
+        /// <summary>
+        /// Konstruktor kamery s rozšířenými parametry pro světlo.
+        /// </summary>
         public Camera(
             float width,
             float height,
@@ -44,7 +53,10 @@ namespace semestral_work.Graphics
             float movementSpeed,
             float mouseSensitivity,
             float lightHeight,
-            float angleOfDepression)
+            float angleOfDepression,
+            float lightCutoffDeg,    
+            float lightRange
+        )
         {
             screenWidth = width;
             screenHeight = height;
@@ -55,10 +67,12 @@ namespace semestral_work.Graphics
             this.mouseSensitivity = mouseSensitivity;
             this.lightHeight = lightHeight;
             this.angleOfDepression = angleOfDepression;
+            this.lightCutoffDeg = lightCutoffDeg; 
+            this.lightRange = lightRange;         
         }
 
         /// <summary>
-        /// Aktualizace kamery (pohyb, myš)
+        /// Aktualizace kamery (pohyb, myš).
         /// </summary>
         public void Update(KeyboardState input, MouseState mouse, FrameEventArgs e)
         {
@@ -66,7 +80,7 @@ namespace semestral_work.Graphics
         }
 
         /// <summary>
-        /// Vrací view matici
+        /// Vrací view matici (pohled kamery).
         /// </summary>
         public Matrix4 GetViewMatrix()
         {
@@ -74,7 +88,7 @@ namespace semestral_work.Graphics
         }
 
         /// <summary>
-        /// Vrací projekční matici (45° FOV)
+        /// Vrací projekční matici (45° FOV).
         /// </summary>
         public Matrix4 GetProjectionMatrix()
         {
@@ -86,7 +100,7 @@ namespace semestral_work.Graphics
         }
 
         /// <summary>
-        /// Zpracování vstupu a kolizí
+        /// Zpracování vstupu (W, A, S, D) a pohybu kamery s kolizemi.
         /// </summary>
         private void InputController(KeyboardState input, MouseState mouse, FrameEventArgs e)
         {
@@ -127,7 +141,7 @@ namespace semestral_work.Graphics
         }
 
         /// <summary>
-        /// Posuv s možností sklouznutí po zdi
+        /// Posuv s možností sklouznutí po zdi.
         /// </summary>
         private void AttemptSlideMove(Vector3 move)
         {
@@ -157,7 +171,7 @@ namespace semestral_work.Graphics
         }
 
         /// <summary>
-        /// Kontrola kolizí s mapou a zdmi
+        /// Kontrola kolizí s mapou a zdmi.
         /// </summary>
         private bool CanWalkAt(Vector2 newPos2D)
         {
@@ -198,22 +212,19 @@ namespace semestral_work.Graphics
         }
 
         /// <summary>
-        /// Aktualizuje směrové vektory podle pitch/yaw
+        /// Aktualizuje směrové vektory podle pitch/yaw.
         /// </summary>
         private void UpdateVectors()
         {
-            // (90 způsobuje chyby s výpočtem vektorů)
+            // Zabraňme extrémním úhlům (±90°), aby se kamera neotočila vzhůru nohama
             if (pitch > 89.0f) pitch = 89.0f;
             if (pitch < -89.0f) pitch = -89.0f;
 
             front.X = MathF.Cos(MathHelper.DegreesToRadians(pitch))
                     * MathF.Cos(MathHelper.DegreesToRadians(yaw));
-
             front.Y = MathF.Sin(MathHelper.DegreesToRadians(pitch));
-            
             front.Z = MathF.Cos(MathHelper.DegreesToRadians(pitch))
                     * MathF.Sin(MathHelper.DegreesToRadians(yaw));
-            
             front = Vector3.Normalize(front);
 
             right = Vector3.Normalize(Vector3.Cross(front, Vector3.UnitY));
@@ -221,12 +232,14 @@ namespace semestral_work.Graphics
         }
 
         /// <summary>
-        /// Vrací pozici a směr svítilny (se sklonem dolů)
+        /// Vrací pozici a směr svítilny (se sklonem dolů).
         /// </summary>
         public (Vector3 position, Vector3 direction) GetFlashlightParams()
         {
+            // Umístění baterky = XZ z kamery, Y = lightHeight
             Vector3 flashlightPos = new Vector3(position.X, lightHeight, position.Z);
 
+            // Použijeme menší pitch, abychom se dívali trochu dolů (angleOfDepression)
             float pitchFlashlight = pitch - angleOfDepression;
             float yawFlashlight = yaw;
 

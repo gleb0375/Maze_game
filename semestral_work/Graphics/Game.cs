@@ -91,7 +91,7 @@ namespace semestral_work.Graphics
             string ceilingPath = AppConfig.GetCeilingTexturePath();
             _textureCeiling = TextureLoader.LoadTexture(ceilingPath);
 
-            // Nastavení uniformy pro texturu
+            // Nastavení uniformy pro texturu = 0
             _shader.Use();
             int texLoc = GL.GetUniformLocation(_shader.Handle, "uTexture");
             GL.Uniform1(texLoc, 0);
@@ -187,30 +187,27 @@ namespace semestral_work.Graphics
 
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-            // Aktivace shaderu
             _shader.Use();
 
-            // Parametry světla
+            // Parametry světla z kamery
             var (flashPos, flashDir) = _camera.GetFlashlightParams();
-            float cutoffDeg = 20f;
+            float cutoffDeg = _camera.LightCutoffDeg; 
             float cutoffCos = MathF.Cos(MathHelper.DegreesToRadians(cutoffDeg));
+            float range = _camera.LightRange;
 
-            // Získání lokace uniform pro světlo
+            // Získání lokací uniform
             int locLightPos = GL.GetUniformLocation(_shader.Handle, "uLightPos");
             int locLightDir = GL.GetUniformLocation(_shader.Handle, "uLightDir");
             int locSpotCut = GL.GetUniformLocation(_shader.Handle, "uSpotCutoff");
+            int locLightRange = GL.GetUniformLocation(_shader.Handle, "uLightRange");
 
             // Aplikace dat do shaderu
             if (locLightPos >= 0) GL.Uniform3(locLightPos, flashPos);
             if (locLightDir >= 0) GL.Uniform3(locLightDir, flashDir);
             if (locSpotCut >= 0) GL.Uniform1(locSpotCut, cutoffCos);
-
-            // Nastavení dosahu světla 
-            int locLightRange = GL.GetUniformLocation(_shader.Handle, "uLightRange");
-            float range = 10f;
             if (locLightRange >= 0) GL.Uniform1(locLightRange, range);
 
-            // Příprava matic
+            // Matice
             Matrix4 view = _camera.GetViewMatrix();
             Matrix4 proj = _camera.GetProjectionMatrix();
             int uModelLoc = GL.GetUniformLocation(_shader.Handle, "uModel");
@@ -228,7 +225,7 @@ namespace semestral_work.Graphics
             GL.BindVertexArray(_floorVao);
             GL.DrawElements(PrimitiveType.Triangles, _floorIndexCount, DrawElementsType.UnsignedInt, 0);
 
-            // Vykreslení stropu (posunutý do výšky y=3)
+            // Vykreslení stropu
             Matrix4 ceilingModel = Matrix4.CreateTranslation(0f, 3f, 0f);
             Matrix4 ceilingMVP = ceilingModel * view * proj;
             if (uModelLoc >= 0) GL.UniformMatrix4(uModelLoc, false, ref ceilingModel);
@@ -255,7 +252,6 @@ namespace semestral_work.Graphics
             // Výměna framebufferů
             SwapBuffers();
         }
-
 
         /// <summary>
         /// Uvolnění prostředků při zavření okna.

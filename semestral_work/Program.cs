@@ -31,12 +31,14 @@ namespace semestral_work
             float mouseSens = AppConfig.GetMouseSensivity();
             float lightHeight = AppConfig.GetLightHeight();
             float angleDep = AppConfig.GetAngleOfDepression();
+            float lightCutoffDeg = AppConfig.GetLightCutoffDeg();
+            float lightRange = AppConfig.GetLightRange();
 
             // Získání počáteční pozice hráče ze symbolu '@' na mapě
             Vector3 playerStart = GetPlayerStartPosition(map);
 
             // Vytvoření kamery
-            Camera camera = new Camera(width, height, playerStart, map, movementSpeed, mouseSens, lightHeight, angleDep);
+            Camera camera = new Camera(width, height, playerStart, map, movementSpeed, mouseSens, lightHeight, angleDep, lightCutoffDeg, lightRange);
 
             // Nastavení okna
             var nativeSettings = new NativeWindowSettings()

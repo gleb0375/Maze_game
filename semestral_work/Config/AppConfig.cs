@@ -126,5 +126,33 @@ namespace semestral_work.Config
             Log.Information("Movement speed read: {Speed}", movementSpeed);
             return movementSpeed;
         }
+
+        public static float GetLightCutoffDeg()
+        {
+            string cutoffStr = Configuration["Light:CutoffDeg"]
+                ?? throw new Exception("Light:CutoffDeg is not configured in appsettings.json.");
+
+            if (!float.TryParse(cutoffStr, NumberStyles.Float, CultureInfo.InvariantCulture, out float cutoff))
+            {
+                throw new Exception("Invalid Light:CutoffDeg value in appsettings.json: " + cutoffStr);
+            }
+
+            Log.Information("Light cutoff read: {CutoffDeg}", cutoff);
+            return cutoff;
+        }
+
+        public static float GetLightRange()
+        {
+            string rangeStr = Configuration["Light:Range"]
+                ?? throw new Exception("Light:Range is not configured in appsettings.json.");
+
+            if (!float.TryParse(rangeStr, NumberStyles.Float, CultureInfo.InvariantCulture, out float range))
+            {
+                throw new Exception("Invalid Light:Range value in appsettings.json: " + rangeStr);
+            }
+
+            Log.Information("Light range read: {Range}", range);
+            return range;
+        }
     }
 }
