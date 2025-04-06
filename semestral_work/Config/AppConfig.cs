@@ -4,6 +4,11 @@ using Serilog;
 
 namespace semestral_work.Config
 {
+
+    /// <summary>
+    /// Poskytuje centralizovaný přístup ke konfiguraci aplikace načtené z appsettings.json.
+    /// Obsahuje metody pro čtení cest k souborům, shaderům, texturám a dalších parametrů jako výška kamery, rychlost pohybu apod.
+    /// </summary>
     internal class AppConfig
     {
         public static IConfiguration Configuration { get; private set; } = null!;

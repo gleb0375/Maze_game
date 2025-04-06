@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using semestral_work.Config;
 using semestral_work.Map;
 using semestral_work.Graphics;
@@ -9,30 +9,36 @@ using System;
 
 namespace semestral_work
 {
+    /// <summary>
+    /// Vstupní bod aplikace. Inicializuje konfiguraci, logování, mapu, kameru a spouští hru.
+    /// </summary>
     internal static class Program
     {
         static void Main()
         {
+            // Načtení konfigurace z appsettings.json
             AppConfig.Init();
+
+            // Inicializace loggeru (Serilog)
             LoggerSetup.InitializeLogger();
 
-            // Parse the map once
+            // zpracování mapy
             ParsedMap map = MapParser.ParseMap();
 
-            // Get window dimensions from configuration
+            // Načtení parametrů z konfigurace
             (int width, int height) = AppConfig.GetWindowDimensions();
             float movementSpeed = AppConfig.GetMovementSpeed();
             float mouseSens = AppConfig.GetMouseSensivity();
             float lightHeight = AppConfig.GetLightHeight();
             float angleDep = AppConfig.GetAngleOfDepression();
 
-            // Determine the player's starting position from the map
+            // Získání počáteční pozice hráče ze symbolu '@' na mapě
             Vector3 playerStart = GetPlayerStartPosition(map);
 
-            // Create the camera directly
+            // Vytvoření kamery
             Camera camera = new Camera(width, height, playerStart, map, movementSpeed, mouseSens, lightHeight, angleDep);
 
-            // Set up native window settings
+            // Nastavení okna
             var nativeSettings = new NativeWindowSettings()
             {
                 ClientSize = new Vector2i(width, height),
@@ -40,18 +46,18 @@ namespace semestral_work
                 Title = "Maze Game"
             };
 
-            // Create and run the game directly
+            // Spuštění instance hry
             using (Game game = new Game(GameWindowSettings.Default, nativeSettings, map, camera))
             {
                 game.Run();
             }
 
+            // Korektní ukončení logování
             Log.CloseAndFlush();
         }
 
         /// <summary>
-        /// Searches the parsed map for the PlayerStart cell and returns the world coordinates
-        /// of the center of that cell. Throws an exception if not found.
+        /// Vyhledá na mapě pozici hráče (symbol '@') a vrátí souřadnice středu této buňky.
         /// </summary>
         private static Vector3 GetPlayerStartPosition(ParsedMap map)
         {
@@ -72,9 +78,8 @@ namespace semestral_work
             }
 
             if (startRow == -1 || startCol == -1)
-                throw new Exception("No player start '@' found in map.");
-
-            // Each cell is 2 meters; the center is at (col * 2 + 1, row * 2 + 1)
+                throw new Exception("Na mapě nebyla nalezena startovní pozice hráče '@'.");
+            
             float startX = startCol * 2 + 1;
             float startZ = startRow * 2 + 1;
             float cameraHeight = AppConfig.GetCameraHeight();

@@ -8,10 +8,13 @@ namespace semestral_work.Graphics
 {
     internal static class TextureLoader
     {
-        // Anisotropic filtering constants (EXT_texture_filter_anisotropic)
+        // Konstanty pro anisotropní filtrování
         private const int GL_TEXTURE_MAX_ANISOTROPY_EXT = 0x84FE;
         private const int GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT = 0x84FF;
 
+        /// <summary>
+        /// Načte texturu ze souboru a vrátí její OpenGL ID.
+        /// </summary>
         public static int LoadTexture(string path)
         {
             ValidateFileExists(path);
@@ -21,7 +24,7 @@ namespace semestral_work.Graphics
             UploadImage(image);
             SetTextureParameters();
             GenerateMipmaps();
-            ApplyAnisotropicFiltering(); // !!!
+            ApplyAnisotropicFiltering(); // anisotropní ostření textury (možná nebude fungovat všude)
             UnbindTexture();
 
             Log.Information("Texture loaded successfully: {Path}", path);
@@ -73,11 +76,11 @@ namespace semestral_work.Graphics
 
         private static void SetTextureParameters()
         {
-            // Set texture filtering parameters
+            // Filtry
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.LinearMipmapLinear);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
 
-            // Set texture wrapping parameters
+            // Opakování textury
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
         }

@@ -14,32 +14,35 @@ namespace semestral_work.Graphics
         private ParsedMap _map;
         private Camera _camera;
 
-        // Floor
+        // Podlaha
         private int _floorVao;
         private int _floorIndexCount;
 
-        // Walls
+        // Zdi
         private int _wallVao;
         private List<Matrix4> _wallMatrices;
 
-        // Ceiling
+        // Strop
         private int _ceilingVao;
         private int _ceilingIndexCount;
 
-        // Shader & Textures
+        // Shader a textury
         private Shader? _shader;
         private int _textureFloor;
         private int _textureWalls;
         private int _textureCeiling;
 
-        // Mouse-cursor lock
+        // Zamknutí kurzoru myši
         private bool _mouseGrabbed = true;
 
-        // FPS counter
+        // Počítadlo FPS
         private double _accumTime;
         private int _frameCount;
         private int _fps;
 
+        /// <summary>
+        /// Vytvoří nové herní okno s mapou a kamerou.
+        /// </summary>
         public Game(GameWindowSettings gameWindowSettings,
                     NativeWindowSettings nativeWindowSettings,
                     ParsedMap map,
@@ -53,6 +56,9 @@ namespace semestral_work.Graphics
             CursorState = CursorState.Grabbed;
         }
 
+        /// <summary>
+        /// Inicializace OpenGL, načtení geometrie, shaderů a textur.
+        /// </summary>
         protected override void OnLoad()
         {
             base.OnLoad();
@@ -62,44 +68,44 @@ namespace semestral_work.Graphics
 
             GL.Enable(EnableCap.DepthTest);
 
-            // 1) Create floor
+            // Vytvoření podlahy
             (_floorVao, _floorIndexCount) = PlaneBuilder.CreatePlaneVAO(_map.Rows, _map.Columns);
 
-            // 2) Create walls
+            // Vytvoření zdí
             _wallVao = BlockBuilder.CreateBlockVAO();
 
-            // 3) Load shaders
+            // Načtení shaderů
             string vertexPath = AppConfig.GetVertexShaderPath();
             string fragmentPath = AppConfig.GetFragmentShaderPath();
             string vertexCode = File.ReadAllText(vertexPath);
             string fragmentCode = File.ReadAllText(fragmentPath);
             _shader = new Shader(vertexCode, fragmentCode);
 
-            // 4) Load textures
-            // floor
+            // Načtení textur
             string floorPath = AppConfig.GetFloorTexturePath();
             _textureFloor = TextureLoader.LoadTexture(floorPath);
 
-            // walls
             string wallPath = AppConfig.GetWallTexturePath();
             _textureWalls = TextureLoader.LoadTexture(wallPath);
 
-            // ceiling
-            string ceilingPath = AppConfig.GetCeilingTexturePath(); // new method
+            string ceilingPath = AppConfig.GetCeilingTexturePath();
             _textureCeiling = TextureLoader.LoadTexture(ceilingPath);
 
-            // Set the uniform for texture = 0
+            // Nastavení uniformy pro texturu
             _shader.Use();
             int texLoc = GL.GetUniformLocation(_shader.Handle, "uTexture");
             GL.Uniform1(texLoc, 0);
 
-            // 5) Create ceiling (use old builder)
+            // Vytvoření stropu
             (_ceilingVao, _ceilingIndexCount) = PlaneBuilder.CreatePlaneVAO(_map.Rows, _map.Columns);
 
-            // 6) Generate matrices for walls
+            // Generování transformačních matic pro zdi
             GenerateWallMatrices();
         }
 
+        /// <summary>
+        /// Vygeneruje transformační matice pro všechny zdi na mapě.
+        /// </summary>
         private void GenerateWallMatrices()
         {
             _wallMatrices.Clear();
@@ -111,7 +117,6 @@ namespace semestral_work.Graphics
                     {
                         float x = col * 2.0f + 1.0f;
                         float z = row * 2.0f + 1.0f;
-                        // Shift the block up by 1.5 so bottom is at y=0
                         var translation = Matrix4.CreateTranslation(x, 1.5f, z);
                         _wallMatrices.Add(translation);
                     }
@@ -119,6 +124,9 @@ namespace semestral_work.Graphics
             }
         }
 
+        /// <summary>
+        /// Zpracování změny velikosti okna.
+        /// </summary>
         protected override void OnResize(ResizeEventArgs e)
         {
             base.OnResize(e);
@@ -128,20 +136,14 @@ namespace semestral_work.Graphics
             _camera.screenHeight = e.Height;
         }
 
+        /// <summary>
+        /// Zpracování vstupu a aktualizace logiky každý snímek.
+        /// </summary>
         protected override void OnUpdateFrame(FrameEventArgs args)
         {
             base.OnUpdateFrame(args);
 
-            // FPS counter
-            _accumTime += args.Time;
-            _frameCount++;
-            if (_accumTime >= 1.0)
-            {
-                _fps = _frameCount;
-                _frameCount = 0;
-                _accumTime = 0.0;
-                Title = $"Maze Game | FPS: {_fps}";
-            }
+            UpdateFpsCounter(args.Time);
 
             var input = KeyboardState;
             if (input.IsKeyPressed(GLKeys.Escape))
@@ -153,6 +155,26 @@ namespace semestral_work.Graphics
             _camera.Update(KeyboardState, MouseState, args);
         }
 
+        /// <summary>
+        /// Aktualizuje počítadlo FPS a nastaví titulek okna.
+        /// </summary>
+        private void UpdateFpsCounter(double deltaTime)
+        {
+            _accumTime += deltaTime;
+            _frameCount++;
+
+            if (_accumTime >= 1.0)
+            {
+                _fps = _frameCount;
+                _frameCount = 0;
+                _accumTime = 0.0;
+                Title = $"Maze Game | FPS: {_fps}";
+            }
+        }
+
+        /// <summary>
+        /// Vykreslování scény každý snímek.
+        /// </summary>
         protected override void OnRenderFrame(FrameEventArgs args)
         {
             base.OnRenderFrame(args);
@@ -165,29 +187,36 @@ namespace semestral_work.Graphics
 
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
+            // Aktivace shaderu
             _shader.Use();
 
-            // 1) Spotlight parameters
+            // Parametry světla
             var (flashPos, flashDir) = _camera.GetFlashlightParams();
             float cutoffDeg = 20f;
             float cutoffCos = MathF.Cos(MathHelper.DegreesToRadians(cutoffDeg));
 
+            // Získání lokace uniform pro světlo
             int locLightPos = GL.GetUniformLocation(_shader.Handle, "uLightPos");
             int locLightDir = GL.GetUniformLocation(_shader.Handle, "uLightDir");
             int locSpotCut = GL.GetUniformLocation(_shader.Handle, "uSpotCutoff");
 
+            // Aplikace dat do shaderu
             if (locLightPos >= 0) GL.Uniform3(locLightPos, flashPos);
             if (locLightDir >= 0) GL.Uniform3(locLightDir, flashDir);
             if (locSpotCut >= 0) GL.Uniform1(locSpotCut, cutoffCos);
 
-            // 2) Matrices
+            // Nastavení dosahu světla 
+            int locLightRange = GL.GetUniformLocation(_shader.Handle, "uLightRange");
+            float range = 10f;
+            if (locLightRange >= 0) GL.Uniform1(locLightRange, range);
+
+            // Příprava matic
             Matrix4 view = _camera.GetViewMatrix();
             Matrix4 proj = _camera.GetProjectionMatrix();
-
             int uModelLoc = GL.GetUniformLocation(_shader.Handle, "uModel");
             int uMVPLoc = GL.GetUniformLocation(_shader.Handle, "uMVP");
 
-            // -- Render floor --
+            // Vykreslení podlahy
             Matrix4 floorModel = Matrix4.Identity;
             Matrix4 floorMVP = floorModel * view * proj;
             if (uModelLoc >= 0) GL.UniformMatrix4(uModelLoc, false, ref floorModel);
@@ -199,8 +228,7 @@ namespace semestral_work.Graphics
             GL.BindVertexArray(_floorVao);
             GL.DrawElements(PrimitiveType.Triangles, _floorIndexCount, DrawElementsType.UnsignedInt, 0);
 
-            // -- Render ceiling --
-            // we place it at y=3 (if each block is height=3)
+            // Vykreslení stropu (posunutý do výšky y=3)
             Matrix4 ceilingModel = Matrix4.CreateTranslation(0f, 3f, 0f);
             Matrix4 ceilingMVP = ceilingModel * view * proj;
             if (uModelLoc >= 0) GL.UniformMatrix4(uModelLoc, false, ref ceilingModel);
@@ -210,7 +238,7 @@ namespace semestral_work.Graphics
             GL.BindVertexArray(_ceilingVao);
             GL.DrawElements(PrimitiveType.Triangles, _ceilingIndexCount, DrawElementsType.UnsignedInt, 0);
 
-            // -- Render walls --
+            // Vykreslení zdí
             GL.BindVertexArray(_wallVao);
             GL.BindTexture(TextureTarget.Texture2D, _textureWalls);
 
@@ -224,16 +252,21 @@ namespace semestral_work.Graphics
                 GL.DrawElements(PrimitiveType.Triangles, 36, DrawElementsType.UnsignedInt, 0);
             }
 
+            // Výměna framebufferů
             SwapBuffers();
         }
 
+
+        /// <summary>
+        /// Uvolnění prostředků při zavření okna.
+        /// </summary>
         protected override void OnUnload()
         {
             base.OnUnload();
 
             GL.DeleteVertexArray(_floorVao);
             GL.DeleteVertexArray(_wallVao);
-            GL.DeleteVertexArray(_ceilingVao); 
+            GL.DeleteVertexArray(_ceilingVao);
 
             _shader?.Dispose();
 

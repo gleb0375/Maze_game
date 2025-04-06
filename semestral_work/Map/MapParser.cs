@@ -1,15 +1,14 @@
 ﻿using Serilog;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace semestral_work.Map
 {
     internal class MapParser
     {
-
+        /// <summary>
+        /// Načte a zpracuje mapu ze souboru.
+        /// Kontroluje rozměry, validitu řádků a pozici hráče.
+        /// </summary>
         public static ParsedMap ParseMap()
         {
             char[][] rawMap = MapLoader.LoadMap();
@@ -70,6 +69,9 @@ namespace semestral_work.Map
             return new ParsedMap(parsedCells);
         }
 
+        /// <summary>
+        /// Převede znak z mapy na odpovídající typ buňky.
+        /// </summary>
         private static CellType ConvertCharToCellType(char c)
         {
             if (c == '@')

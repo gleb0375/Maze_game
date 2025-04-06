@@ -8,6 +8,9 @@ namespace semestral_work.Graphics
     {
         public int Handle { get; private set; }
 
+        /// <summary>
+        /// Vytvoří a linkuje vertex a fragment shader do jednoho programu.
+        /// </summary>
         public Shader(string vertexCode, string fragmentCode)
         {
             int vertexShader = CompileShader(ShaderType.VertexShader, vertexCode);
@@ -32,6 +35,10 @@ namespace semestral_work.Graphics
             GL.DeleteShader(fragmentShader);
         }
 
+
+        /// <summary>
+        /// Zkompiluje shader daného typu.
+        /// </summary>
         private int CompileShader(ShaderType type, string code)
         {
             int shader = GL.CreateShader(type);
