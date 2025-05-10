@@ -41,6 +41,7 @@ namespace semestral_work.Graphics
 
         public float LightCutoffDeg => lightCutoffDeg;
         public float LightRange => lightRange;
+        public float YawDeg => yaw;
 
         /// <summary>
         /// Konstruktor kamery s rozšířenými parametry pro světlo.

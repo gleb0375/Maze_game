@@ -40,6 +40,8 @@ namespace semestral_work.Graphics
         private int _frameCount;
         private int _fps;
 
+        private MinimapRenderer? _minimap;
+
         /// <summary>
         /// Vytvoří nové herní okno s mapou a kamerou.
         /// </summary>
@@ -101,6 +103,8 @@ namespace semestral_work.Graphics
 
             // Generování transformačních matic pro zdi
             GenerateWallMatrices();
+
+            _minimap = new MinimapRenderer(_map, _wallMatrices);
         }
 
         /// <summary>
@@ -249,6 +253,8 @@ namespace semestral_work.Graphics
                 GL.DrawElements(PrimitiveType.Triangles, 36, DrawElementsType.UnsignedInt, 0);
             }
 
+            _minimap!.Render(_camera, Size.X, Size.Y);
+
             // Výměna framebufferů
             SwapBuffers();
         }
@@ -265,6 +271,7 @@ namespace semestral_work.Graphics
             GL.DeleteVertexArray(_ceilingVao);
 
             _shader?.Dispose();
+            _minimap?.Dispose();
 
             GL.DeleteTexture(_textureFloor);
             GL.DeleteTexture(_textureWalls);
