@@ -154,5 +154,55 @@ namespace semestral_work.Config
             Log.Information("Light range read: {Range}", range);
             return range;
         }
+
+        public static string GetMiniMapVertexShaderPath()
+        {
+            string? path = Configuration["MiniMapConfig:VertexShaderPath"];
+            if (string.IsNullOrWhiteSpace(path))
+                throw new Exception("MiniMapConfig:MiniMapVertexShaderPath is not configured in appsettings.json.");
+
+            Log.Information("MiniMap vertex shader path: {Path}", path);
+            return path;
+        }
+
+        public static string GetMiniMapFragmentShaderPath()
+        {
+            string? path = Configuration["MiniMapConfig:FragmentShaderPath"];
+            if (string.IsNullOrWhiteSpace(path))
+                throw new Exception("MiniMapConfig:MiniMapFragmentShaderPath is not configured in appsettings.json.");
+
+            Log.Information("MiniMap fragment shader path: {Path}", path);
+            return path;
+        }
+
+        public static int GetMiniMapSizeInPixels()
+        {
+            string? sizeStr = Configuration["MiniMapConfig:SizeInPx"];
+            if (!int.TryParse(sizeStr, out int size))
+                throw new Exception("Invalid MiniMapConfig:SizeInPx value in appsettings.json: " + sizeStr);
+
+            Log.Information("MiniMap size in pixels: {Size}", size);
+            return size;
+        }
+
+        public static float GetMiniMapViewRadius()
+        {
+            string? radiusStr = Configuration["MiniMapConfig:ViewRadius"];
+            if (!float.TryParse(radiusStr, NumberStyles.Float, CultureInfo.InvariantCulture, out float radius))
+                throw new Exception("Invalid MiniMapConfig:ViewRadius value in appsettings.json: " + radiusStr);
+
+            Log.Information("MiniMap view radius: {Radius}", radius);
+            return radius;
+        }
+
+        public static float GetMiniMapArrowSize()
+        {
+            string? arrowSizeStr = Configuration["MiniMapConfig:ArrowSize"];
+            if (!float.TryParse(arrowSizeStr, NumberStyles.Float, CultureInfo.InvariantCulture, out float arrowSize))
+                throw new Exception("Invalid MiniMapConfig:ArrowSize value in appsettings.json: " + arrowSizeStr);
+
+            Log.Information("MiniMap arrow size: {ArrowSize}", arrowSize);
+            return arrowSize;
+        }
     }
 }

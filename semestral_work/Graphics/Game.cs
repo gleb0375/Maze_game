@@ -104,7 +104,19 @@ namespace semestral_work.Graphics
             // Generování transformačních matic pro zdi
             GenerateWallMatrices();
 
-            _minimap = new MinimapRenderer(_map, _wallMatrices);
+            Log.Information("Creating MinimapRenderer...");
+
+            string miniVertexPath = AppConfig.GetMiniMapVertexShaderPath();
+            string miniFragmentPath = AppConfig.GetMiniMapFragmentShaderPath();
+            string miniVertexCode = File.ReadAllText(miniVertexPath);
+            string miniFragmentCode = File.ReadAllText(miniFragmentPath);
+            var miniShader = new Shader(miniVertexCode, miniFragmentCode);
+
+            int miniSize = AppConfig.GetMiniMapSizeInPixels();
+            float viewRadius = AppConfig.GetMiniMapViewRadius();
+            float arrowSize = AppConfig.GetMiniMapArrowSize();
+
+            _minimap = new MinimapRenderer(_map, _wallMatrices, miniShader, miniSize, viewRadius, arrowSize);
         }
 
         /// <summary>
