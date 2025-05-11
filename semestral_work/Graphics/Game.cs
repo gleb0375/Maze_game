@@ -42,6 +42,9 @@ namespace semestral_work.Graphics
 
         private MinimapRenderer? _minimap;
 
+        private Shader? _appleShader;
+        private CollectableManager? _collectables;
+
         /// <summary>
         /// Vytvoří nové herní okno s mapou a kamerou.
         /// </summary>
@@ -117,6 +120,12 @@ namespace semestral_work.Graphics
             float arrowSize = AppConfig.GetMiniMapArrowSize();
 
             _minimap = new MinimapRenderer(_map, _wallMatrices, miniShader, miniSize, viewRadius, arrowSize);
+
+            _appleShader = new Shader(
+    File.ReadAllText("Shaders/apple.vert"),
+    File.ReadAllText("Shaders/apple.frag"));
+
+            _collectables = new CollectableManager(_map, _appleShader);
         }
 
         /// <summary>
@@ -265,6 +274,8 @@ namespace semestral_work.Graphics
                 GL.DrawElements(PrimitiveType.Triangles, 36, DrawElementsType.UnsignedInt, 0);
             }
 
+            _collectables?.Render(view, proj);
+
             _minimap!.Render(_camera, Size.X, Size.Y);
 
             // Výměna framebufferů
@@ -284,6 +295,8 @@ namespace semestral_work.Graphics
 
             _shader?.Dispose();
             _minimap?.Dispose();
+            _appleShader?.Dispose();
+            _collectables?.Dispose();
 
             GL.DeleteTexture(_textureFloor);
             GL.DeleteTexture(_textureWalls);

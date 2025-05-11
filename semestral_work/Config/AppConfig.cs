@@ -204,5 +204,15 @@ namespace semestral_work.Config
             Log.Information("MiniMap arrow size: {ArrowSize}", arrowSize);
             return arrowSize;
         }
+
+        public static string GetAppleModelPath()
+        {
+            string? path = Configuration["CollectableItems:applePath"];
+            if (string.IsNullOrWhiteSpace(path))
+                throw new Exception("CollectableItems:applePath is not configured in appsettings.json.");
+
+            Log.Information("Apple model path: {Path}", path);
+            return path;
+        }
     }
 }
