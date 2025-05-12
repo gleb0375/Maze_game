@@ -214,5 +214,8 @@ namespace semestral_work.Config
             Log.Information("Apple model path: {Path}", path);
             return path;
         }
+
+        public static string GetAppleModelObjPath() =>
+            Configuration["CollectableItems:appleObjPath"] ?? throw new Exception("CollectableItems:appleObjPath not set");
     }
 }

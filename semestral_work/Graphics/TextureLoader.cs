@@ -102,5 +102,28 @@ namespace semestral_work.Graphics
         {
             GL.BindTexture(TextureTarget.Texture2D, 0);
         }
+
+
+        public static int LoadTextureFromMemory(byte[] bytes)
+        {
+            var image = ImageResult.FromMemory(bytes, ColorComponents.RedGreenBlueAlpha);
+
+            int handle = GL.GenTexture();
+            GL.BindTexture(TextureTarget.Texture2D, handle);
+
+            GL.TexImage2D(TextureTarget.Texture2D, 0,
+                PixelInternalFormat.Rgba,
+                image.Width, image.Height, 0,
+                PixelFormat.Rgba, PixelType.UnsignedByte,
+                image.Data);
+
+            SetTextureParameters();
+            GenerateMipmaps();
+            ApplyAnisotropicFiltering();
+            GL.BindTexture(TextureTarget.Texture2D, 0);
+
+            Log.Information("Texture loaded from memory ({0}×{1})", image.Width, image.Height);
+            return handle;
+        }
     }
 }

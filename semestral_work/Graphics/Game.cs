@@ -6,6 +6,7 @@ using Serilog;
 using semestral_work.Config;
 using semestral_work.Map;
 using GLKeys = OpenTK.Windowing.GraphicsLibraryFramework.Keys;
+using System.Windows.Forms;
 
 namespace semestral_work.Graphics
 {
@@ -122,8 +123,8 @@ namespace semestral_work.Graphics
             _minimap = new MinimapRenderer(_map, _wallMatrices, miniShader, miniSize, viewRadius, arrowSize);
 
             _appleShader = new Shader(
-    File.ReadAllText("Shaders/apple.vert"),
-    File.ReadAllText("Shaders/apple.frag"));
+                File.ReadAllText("Shaders/apple.vert"),
+                File.ReadAllText("Shaders/apple.frag"));
 
             _collectables = new CollectableManager(_map, _appleShader);
         }
@@ -178,6 +179,7 @@ namespace semestral_work.Graphics
             }
 
             _camera.Update(KeyboardState, MouseState, args);
+            _collectables?.Update((float)args.Time);
         }
 
         /// <summary>
@@ -274,7 +276,14 @@ namespace semestral_work.Graphics
                 GL.DrawElements(PrimitiveType.Triangles, 36, DrawElementsType.UnsignedInt, 0);
             }
 
-            _collectables?.Render(view, proj);
+            float cutCos = MathF.Cos(MathHelper.DegreesToRadians(_camera.LightCutoffDeg));
+
+            _collectables?.Render(view, proj,
+                                  flashPos, flashDir,
+                                  cutCos, range,
+                                  _camera.position);
+
+            //_collectables?.Render(view, proj, flashPos, flashDir, cutCos, range, _camera.position);
 
             _minimap!.Render(_camera, Size.X, Size.Y);
 
