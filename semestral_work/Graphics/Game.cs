@@ -45,6 +45,7 @@ namespace semestral_work.Graphics
 
         private Shader? _appleShader;
         private CollectableManager? _collectables;
+        private int _collected;
 
         /// <summary>
         /// Vytvoří nové herní okno s mapou a kamerou.
@@ -179,7 +180,10 @@ namespace semestral_work.Graphics
             }
 
             _camera.Update(KeyboardState, MouseState, args);
+
             _collectables?.Update((float)args.Time);
+            _collectables?.TryCollect(_camera.position);
+            _collected = _collectables?.CollectedCount ?? 0;
         }
 
         /// <summary>
@@ -195,7 +199,7 @@ namespace semestral_work.Graphics
                 _fps = _frameCount;
                 _frameCount = 0;
                 _accumTime = 0.0;
-                Title = $"Maze Game | FPS: {_fps}";
+                Title = $"Maze Game | FPS: {_fps} | Apples: {_collected}/{_collectables?.TotalCount}";
             }
         }
 
