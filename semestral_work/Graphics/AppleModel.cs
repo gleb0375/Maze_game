@@ -8,7 +8,6 @@ using PrimitiveType = OpenTK.Graphics.OpenGL4.PrimitiveType;
 
 namespace semestral_work.Graphics
 {
-    /// <summary>Грузит apple.glb: позиции, нормали, UV, базовую текстуру.</summary>
     internal sealed class AppleModel : IDisposable
     {
         private readonly int _vao, _vbo, _ebo, _tex;
@@ -38,7 +37,6 @@ namespace semestral_work.Graphics
             var idx = prim.GetIndices().ToArray();
             _indexCount = idx.Length;
 
-            // -------- VAO/VBO/EBO --------
             _vao = GL.GenVertexArray();
             _vbo = GL.GenBuffer();
             _ebo = GL.GenBuffer();
@@ -65,7 +63,6 @@ namespace semestral_work.Graphics
 
             GL.BindVertexArray(0);
 
-            // -------- базовая текстура из glTF --------
             var img = prim.Material?
                             .FindChannel("BaseColor")?
                             .Texture?

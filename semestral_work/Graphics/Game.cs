@@ -113,9 +113,9 @@ namespace semestral_work.Graphics
 
             string miniVertexPath = AppConfig.GetMiniMapVertexShaderPath();
             string miniFragmentPath = AppConfig.GetMiniMapFragmentShaderPath();
-            string miniVertexCode = File.ReadAllText(miniVertexPath);
-            string miniFragmentCode = File.ReadAllText(miniFragmentPath);
-            var miniShader = new Shader(miniVertexCode, miniFragmentCode);
+            var miniShader = new Shader(
+                 File.ReadAllText(miniVertexPath),
+                 File.ReadAllText(miniFragmentPath));
 
             int miniSize = AppConfig.GetMiniMapSizeInPixels();
             float viewRadius = AppConfig.GetMiniMapViewRadius();
@@ -123,9 +123,13 @@ namespace semestral_work.Graphics
 
             _minimap = new MinimapRenderer(_map, _wallMatrices, miniShader, miniSize, viewRadius, arrowSize);
 
+            Log.Information("Initializing Apple shader");
+
+           string appleVertexPath = AppConfig.GetAppleVertexShaderPath();
+            string appleFragmentPath = AppConfig.GetAppleFragmentShaderPath();
             _appleShader = new Shader(
-                File.ReadAllText("Shaders/apple.vert"),
-                File.ReadAllText("Shaders/apple.frag"));
+                File.ReadAllText(appleVertexPath),
+                File.ReadAllText(appleFragmentPath));
 
             _collectables = new CollectableManager(_map, _appleShader);
         }

@@ -4,11 +4,10 @@ in vec3 vWorldPos;
 in vec2 vUv;
 
 uniform vec3  uLightPos;
-uniform vec3  uLightDir;
-uniform float uSpotCutoff;
+uniform vec3  uLightDir;     
+uniform float uSpotCutoff;   
 uniform float uLightRange;
 
-uniform vec3      uViewPos;
 uniform sampler2D uBaseColor;
 
 out vec4 FragColor;
@@ -20,16 +19,17 @@ void main()
     vec3 N = normalize(vNormal);
     vec3 L = normalize(uLightPos - vWorldPos);
 
-    float spot = dot(normalize(-uLightDir), L);
-    if (spot < uSpotCutoff) discard;
+    float cosTheta = dot(normalize(-uLightDir), L);
+    float spot     = clamp((cosTheta - uSpotCutoff) / (1.0 - uSpotCutoff), 0.0, 1.0);
 
     float dist   = length(uLightPos - vWorldPos);
     float atten  = clamp(1.0 - dist / uLightRange, 0.0, 1.0);
 
-    float diff = max(dot(N, L), 0.0) * atten;
+    float diff = max(dot(N, L), 0.0);
 
-    vec3 ambient = 0.15 * albedo;
-    vec3 color   = ambient + albedo * diff;
+    float ambientStrength = 0.10;          
+    float lighting        = ambientStrength + spot * atten * diff;
 
-    FragColor = vec4(color, 1.0);
+    vec3 color = albedo * lighting;
+    FragColor  = vec4(color, 1.0);
 }

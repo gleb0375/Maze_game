@@ -215,7 +215,26 @@ namespace semestral_work.Config
             return path;
         }
 
-        public static string GetAppleModelObjPath() =>
-            Configuration["CollectableItems:appleObjPath"] ?? throw new Exception("CollectableItems:appleObjPath not set");
+        public static string GetAppleVertexShaderPath()
+        {
+            string? path = Configuration["CollectableItems:AppleShaderVertex"];
+            if (string.IsNullOrWhiteSpace(path))
+                throw new Exception("CollectableItems:AppleShaderVertex is not configured in appsettings.json.");
+
+            Log.Information("Apple vertex shader path: {Path}", path);
+            return path;
+        }
+
+        public static string GetAppleFragmentShaderPath()
+        {
+            string? path = Configuration["CollectableItems:AppleShaderFragment"];
+            if (string.IsNullOrWhiteSpace(path))
+                throw new Exception("CollectableItems:AppleShaderFragment is not configured in appsettings.json.");
+
+            Log.Information("Apple fragment shader path: {Path}", path);
+            return path;
+        }
+
+
     }
 }

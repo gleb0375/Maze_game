@@ -11,9 +11,8 @@ namespace semestral_work.Graphics
     {
         private readonly AppleModel _apple;
         private readonly List<Item> _items = new();
-        private float _time;  // накопленное время
+        private float _time;
 
-        // Параметры анимации
         private const float SCALE = 0.005f;
         private const float BOUNCE_AMPL = 0.08f;
         private const float BOUNCE_FREQ = 2.0f;
@@ -23,9 +22,9 @@ namespace semestral_work.Graphics
 
         private struct Item
         {
-            public Vector3 Pos;    // базовая позиция (XZ + базовая высота)
-            public float Phase;    // сдвиг фазы
-            public bool Collected; // true, если уже подобран
+            public Vector3 Pos;    
+            public float Phase;    
+            public bool Collected; 
         }
 
         public int TotalCount => _items.Count;
