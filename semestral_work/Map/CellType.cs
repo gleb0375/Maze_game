@@ -16,5 +16,6 @@ namespace semestral_work.Map
         SolidObject,
         Enemy,
         Collectable,
+        Car
     }
 }

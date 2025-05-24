@@ -236,5 +236,37 @@ namespace semestral_work.Config
         }
 
 
+        public static string GetCarModelPath()
+        {
+            string? path = Configuration["Cars:PorschePath"];
+            if (string.IsNullOrWhiteSpace(path))
+                throw new Exception("Cars:PorschePath missing.");
+
+            Log.Information("Car model path: {Path}", path);
+            return path;
+        }
+
+
+
+        public static string GetCarVertexShaderPath()
+        {
+            string? path = Configuration["Cars:PorsheShaderVertex"];
+            if (string.IsNullOrWhiteSpace(path))
+                throw new Exception("CollectableItems:AppleShaderVertex is not configured in appsettings.json.");
+
+            Log.Information("Apple vertex shader path: {Path}", path);
+            return path;
+        }
+
+        public static string GetCarFragmentShaderPath()
+        {
+            string? path = Configuration["Cars:PorsheShaderFragment"];
+            if (string.IsNullOrWhiteSpace(path))
+                throw new Exception("CollectableItems:AppleShaderFragment is not configured in appsettings.json.");
+
+            Log.Information("Apple fragment shader path: {Path}", path);
+            return path;
+        }
+
+        }
     }
-}

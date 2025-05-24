@@ -88,6 +88,8 @@ namespace semestral_work.Map
                 return CellType.Enemy;
             else if (c >= 'T' && c <= 'Z')
                 return CellType.Collectable;
+            else if (c == '$')
+                return CellType.Car;
             else
                 return CellType.Free;
         }
