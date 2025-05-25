@@ -6,8 +6,8 @@ x T  A  x     x   A *  x
 x    x  x  *  x   x    x
 xxxAxx  x     x   xxxxxx
 x       A  H  A        x
-x       x  *  x   $    x
-x  *    x     x        x
+x       x  *  x        x
+x  $    x     x        x
 x       xxxAxxx        x
 x                 @     
 xxAxxx    xxAxx        x

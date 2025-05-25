@@ -47,6 +47,9 @@ namespace semestral_work.Graphics
         private CollectableManager? _collectables;
         private int _collected;
 
+        private Shader? _carShader;
+        private CarManager? _cars;
+
         /// <summary>
         /// Vytvoří nové herní okno s mapou a kamerou.
         /// </summary>
@@ -84,9 +87,7 @@ namespace semestral_work.Graphics
             // Načtení shaderů
             string vertexPath = AppConfig.GetVertexShaderPath();
             string fragmentPath = AppConfig.GetFragmentShaderPath();
-            string vertexCode = File.ReadAllText(vertexPath);
-            string fragmentCode = File.ReadAllText(fragmentPath);
-            _shader = new Shader(vertexCode, fragmentCode);
+            _shader = new Shader(File.ReadAllText(vertexPath), File.ReadAllText(fragmentPath));
 
             // Načtení textur
             string floorPath = AppConfig.GetFloorTexturePath();
@@ -125,13 +126,17 @@ namespace semestral_work.Graphics
 
             Log.Information("Initializing Apple shader");
 
-           string appleVertexPath = AppConfig.GetAppleVertexShaderPath();
+            string appleVertexPath = AppConfig.GetAppleVertexShaderPath();
             string appleFragmentPath = AppConfig.GetAppleFragmentShaderPath();
-            _appleShader = new Shader(
-                File.ReadAllText(appleVertexPath),
-                File.ReadAllText(appleFragmentPath));
+            _appleShader = new Shader(File.ReadAllText(appleVertexPath), File.ReadAllText(appleFragmentPath));
 
             _collectables = new CollectableManager(_map, _appleShader);
+
+            Log.Information("Initializing Car shader");
+            string carVert = AppConfig.GetCarVertexShaderPath();
+            string carFrag = AppConfig.GetCarFragmentShaderPath();
+            _carShader = new Shader(File.ReadAllText(carVert), File.ReadAllText(carFrag));
+            _cars = new CarManager(_map, _carShader);
         }
 
         /// <summary>
@@ -292,6 +297,10 @@ namespace semestral_work.Graphics
                                   _camera.position);
 
             //_collectables?.Render(view, proj, flashPos, flashDir, cutCos, range, _camera.position);
+            _cars?.Render(view, proj,
+              flashPos, flashDir,
+              cutCos, range,
+              _camera.position);
 
             _minimap!.Render(_camera, Size.X, Size.Y);
 
@@ -314,6 +323,8 @@ namespace semestral_work.Graphics
             _minimap?.Dispose();
             _appleShader?.Dispose();
             _collectables?.Dispose();
+            _carShader?.Dispose();
+            _cars?.Dispose();
 
             GL.DeleteTexture(_textureFloor);
             GL.DeleteTexture(_textureWalls);
