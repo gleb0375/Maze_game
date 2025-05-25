@@ -10,7 +10,7 @@ internal sealed class CarManager : IDisposable
     private readonly CarModel _car;
     private readonly List<Vector3> _positions = new();
 
-    private const float SCALE = 1.0f;   // ≈ 1,8 м ширина
+    private const float SCALE = 0.9f;
 
     public CarManager(ParsedMap map, Shader carShader)
     {

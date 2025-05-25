@@ -37,9 +37,9 @@ namespace semestral_work.Graphics
         private bool _mouseGrabbed = true;
 
         // Počítadlo FPS
-        private double _accumTime;
-        private int _frameCount;
-        private int _fps;
+        private readonly FpsCounter _fpsTracker = new();
+        private double _titleTimer;
+
 
         private MinimapRenderer? _minimap;
 
@@ -179,7 +179,13 @@ namespace semestral_work.Graphics
         {
             base.OnUpdateFrame(args);
 
-            UpdateFpsCounter(args.Time);
+            _fpsTracker.Update(args.Time);
+            _titleTimer += args.Time;
+            if (_titleTimer >= 0.25)
+            {
+                Title = $"Maze Game | FPS: {_fpsTracker.CurrentFps:0.0} | Apples: {_collected}/{_collectables?.TotalCount}";
+                _titleTimer = 0;
+            }
 
             var input = KeyboardState;
             if (input.IsKeyPressed(GLKeys.Escape))
@@ -195,22 +201,6 @@ namespace semestral_work.Graphics
             _collected = _collectables?.CollectedCount ?? 0;
         }
 
-        /// <summary>
-        /// Aktualizuje počítadlo FPS a nastaví titulek okna.
-        /// </summary>
-        private void UpdateFpsCounter(double deltaTime)
-        {
-            _accumTime += deltaTime;
-            _frameCount++;
-
-            if (_accumTime >= 1.0)
-            {
-                _fps = _frameCount;
-                _frameCount = 0;
-                _accumTime = 0.0;
-                Title = $"Maze Game | FPS: {_fps} | Apples: {_collected}/{_collectables?.TotalCount}";
-            }
-        }
 
         /// <summary>
         /// Vykreslování scény každý snímek.

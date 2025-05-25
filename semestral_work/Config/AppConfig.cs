@@ -247,7 +247,7 @@ namespace semestral_work.Config
 
         public static string GetCarVertexShaderPath()
         {
-            string? path = Configuration["Cars:PorsheShaderVertex"];
+            string? path = Configuration["Cars:PorscheShaderVertex"];
             if (string.IsNullOrWhiteSpace(path))
                 throw new Exception("Cars:PorsheShaderVertex is not configured in appsettings.json.");
 
@@ -257,7 +257,7 @@ namespace semestral_work.Config
 
         public static string GetCarFragmentShaderPath()
         {
-            string? path = Configuration["Cars:PorsheShaderFragment"];
+            string? path = Configuration["Cars:PorscheShaderFragment"];
             if (string.IsNullOrWhiteSpace(path))
                 throw new Exception("Cars:PorsheShaderFragment is not configured in appsettings.json.");
 
