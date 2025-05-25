@@ -53,8 +53,8 @@ namespace semestral_work.Graphics
         private float _bobTimer;
         private readonly float _bobSpeed = 8.0f;   // Hz
         private readonly float _bobAmount = 0.03f; // metry
-        private readonly float _smoothTime = 0.25f; // s (e^-t/τ)
-        private readonly float _baseHeight;        // výška očí od podlahy
+        private readonly float _smoothTime = 0.15f; // s (e^-t/τ)
+        private readonly float _baseHeight;        
 
         public float LightCutoffDeg => lightCutoffDeg;
         public float LightRange => lightRange;
@@ -137,9 +137,6 @@ namespace semestral_work.Graphics
                 100.0f);
         }
 
-        // =====================================================================
-        //                           Privátní metody
-        // =====================================================================
 
         /// <summary>
         /// Zpracuje pohyb hráče (WASD) + myš a provede kolize.

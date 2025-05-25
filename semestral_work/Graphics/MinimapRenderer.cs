@@ -16,6 +16,9 @@ internal sealed class MinimapRenderer : IDisposable
     private readonly float _viewRadius;
     private readonly float _arrowSize;
 
+    /// <summary>
+    /// Inicializace minimapy – vytvoření VAO pro stěny a šipku hráče.
+    /// </summary>
     public MinimapRenderer(
         ParsedMap map,
         List<Matrix4> wallMatrices,
@@ -36,9 +39,9 @@ internal sealed class MinimapRenderer : IDisposable
         float b = _arrowSize * 0.6f;
         float[] arrow =
         {
-             0f, _arrowSize,   // apex
-            -b , -b ,          // left base
-             b , -b            // right base
+             0f, _arrowSize,   
+            -b , -b ,          
+             b , -b            
         };
         _vaoArrow = CreateVao(arrow);
 
@@ -46,6 +49,9 @@ internal sealed class MinimapRenderer : IDisposable
                         _miniSizePx, _viewRadius, _arrowSize);
     }
 
+    /// <summary>
+    /// Vytvoří VAO s jednoduchou 2D geometrií.
+    /// </summary
     private static int CreateVao(float[] data)
     {
         int vao = GL.GenVertexArray();
@@ -59,29 +65,34 @@ internal sealed class MinimapRenderer : IDisposable
         return vao;
     }
 
-    /// <summary>Draw after the 3-D scene.</summary>
+    /// <summary>
+    /// Vykreslení minimapy – volat po vykreslení 3D scény.
+    /// </summary>
     public void Render(Camera cam, int winW, int winH)
     {
         GL.Disable(EnableCap.DepthTest);
         GL.DepthMask(false);
 
+        // Nastavení oblasti pro minimapu
         GL.Viewport(0, winH - _miniSizePx, _miniSizePx, _miniSizePx);
 
         _shader.Use();
         int locMvp = GL.GetUniformLocation(_shader.Handle, "uMVP");
         int locColor = GL.GetUniformLocation(_shader.Handle, "uColor");
 
+        // Ortogonální projekce
         Matrix4 proj = Matrix4.CreateOrthographicOffCenter(
             -_viewRadius, _viewRadius,
             -_viewRadius, _viewRadius,
             -1f, 1f);
 
+        // View matice – natočení a posun dle kamery
         Matrix4 view =
             Matrix4.CreateTranslation(-cam.position.X, -cam.position.Z, 0) *
             Matrix4.CreateRotationZ(MathHelper.DegreesToRadians(-cam.YawDeg - 90f)) *
             Matrix4.CreateScale(1f, -1f, 1f);
 
-        // Walls
+        // Vykreslení zdí
         GL.BindVertexArray(_vaoQuad);
         GL.Uniform3(locColor, new Vector3(1, 1, 1));
 
@@ -96,7 +107,7 @@ internal sealed class MinimapRenderer : IDisposable
             GL.DrawArrays(PrimitiveType.LineLoop, 0, 4);
         }
 
-        // Player Arrow
+        // Vykreslení šipky hráče
         GL.BindVertexArray(_vaoArrow);
         GL.Uniform3(locColor, new Vector3(0, 1, 0));
 
@@ -104,7 +115,7 @@ internal sealed class MinimapRenderer : IDisposable
         GL.UniformMatrix4(locMvp, false, ref mvpArrow);
         GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
 
-        // Restore viewport
+        // Obnovení viewportu
         GL.Viewport(0, 0, winW, winH);
         GL.DepthMask(true);
         GL.Enable(EnableCap.DepthTest);

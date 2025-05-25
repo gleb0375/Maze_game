@@ -7,6 +7,10 @@ using System.Linq;
 
 namespace semestral_work.Graphics
 {
+    /// <summary>
+    /// Třída pro správu sbíratelných předmětů (jablek) na mapě.
+    /// Obsahuje jejich umístění, animaci a detekci sběru hráčem.
+    /// </summary>
     internal sealed class CollectableManager : IDisposable
     {
         private readonly AppleModel _apple;
@@ -20,16 +24,20 @@ namespace semestral_work.Graphics
 
         private const float PICK_RADIUS = 0.9f;
 
+        // Interní struktura pro uložení pozice a stavu předmětu
         private struct Item
         {
-            public Vector3 Pos;    
-            public float Phase;    
-            public bool Collected; 
+            public Vector3 Pos;     // pozice ve světě
+            public float Phase;     // fázový posun pro animaci
+            public bool Collected;  // zda už byl předmět sebrán
         }
 
         public int TotalCount => _items.Count;
         public int CollectedCount => _items.Count(i => i.Collected);
 
+        /// <summary>
+        /// Vytvoří správce a rozloží jablka na mapě podle typu buněk.
+        /// </summary>
         public CollectableManager(ParsedMap map, Shader appleShader)
         {
             _apple = new AppleModel(AppConfig.GetAppleModelPath(), appleShader);
@@ -55,8 +63,14 @@ namespace semestral_work.Graphics
             }
         }
 
+        /// <summary>
+        /// Aktualizuje interní čas pro animaci.
+        /// </summary>
         public void Update(float dt) => _time += dt;
 
+        /// <summary>
+        /// Ověří, zda hráč není v dosahu některého z předmětů, a případně ho sebere.
+        /// </summary>
         public void TryCollect(Vector3 playerPos)
         {
             Vector2 playerXZ = new Vector2(playerPos.X, playerPos.Z);
@@ -76,7 +90,9 @@ namespace semestral_work.Graphics
             }
         }
 
-
+        /// <summary>
+        /// Vykreslí všechna nesehraná jablka s animací.
+        /// </summary>
         public void Render(Matrix4 view, Matrix4 proj,
                            Vector3 lightPos, Vector3 lightDir,
                            float cutCos, float range, Vector3 camPos)
@@ -99,6 +115,9 @@ namespace semestral_work.Graphics
             }
         }
 
+        /// <summary>
+        /// Uvolní prostředky modelu jablka.
+        /// </summary>
         public void Dispose() => _apple.Dispose();
     }
 }

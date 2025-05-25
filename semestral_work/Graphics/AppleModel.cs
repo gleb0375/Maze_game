@@ -8,12 +8,22 @@ using PrimitiveType = OpenTK.Graphics.OpenGL4.PrimitiveType;
 
 namespace semestral_work.Graphics
 {
+    /// <summary>
+    /// Třída pro načtení a vykreslení 3D modelu jablka ve formátu glTF (.glb).
+    /// Obsahuje veškerá OpenGL data potřebná pro zobrazení včetně textury.
+    /// </summary>
     internal sealed class AppleModel : IDisposable
     {
-        private readonly int _vao, _vbo, _ebo, _tex;
+        private readonly int _vao;
+        private readonly int _vbo;
+        private readonly int _ebo;
+        private readonly int _tex;
         private readonly int _indexCount;
         private readonly Shader _shader;
 
+        /// <summary>
+        /// Načte model z .glb souboru a připraví VAO, buffery a texturu.
+        /// </summary>
         public AppleModel(string glbPath, Shader shader)
         {
             _shader = shader ?? throw new ArgumentNullException(nameof(shader));
@@ -72,6 +82,9 @@ namespace semestral_work.Graphics
             _tex = TextureLoader.LoadTextureFromMemory(img.Content.Content.ToArray());
         }
 
+        /// <summary>
+        /// Vykreslení jablka s danými transformačními maticemi a světelnými parametry.
+        /// </summary>
         public void Render(Matrix4 model, Matrix4 view, Matrix4 proj,
                            Vector3 lightPos, Vector3 lightDir,
                            float cutCos, float range, Vector3 camPos)
@@ -97,6 +110,9 @@ namespace semestral_work.Graphics
             GL.BindVertexArray(0);
         }
 
+        /// <summary>
+        /// Uvolnění OpenGL prostředků.
+        /// </summary>
         public void Dispose()
         {
             GL.DeleteVertexArray(_vao);

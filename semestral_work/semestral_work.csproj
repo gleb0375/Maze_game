@@ -56,7 +56,7 @@
     <None Update="Shaders\miniMap.frag">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Shaders\MiniMap.vert">
+    <None Update="Shaders\miniMap.vert">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Shaders\vertex.vert">

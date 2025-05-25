@@ -281,20 +281,12 @@ namespace semestral_work.Graphics
 
             float cutCos = MathF.Cos(MathHelper.DegreesToRadians(_camera.LightCutoffDeg));
 
-            _collectables?.Render(view, proj,
-                                  flashPos, flashDir,
-                                  cutCos, range,
-                                  _camera.position);
+            _collectables?.Render(view, proj, flashPos, flashDir, cutCos, range, _camera.position);
 
-            //_collectables?.Render(view, proj, flashPos, flashDir, cutCos, range, _camera.position);
-            _cars?.Render(view, proj,
-              flashPos, flashDir,
-              cutCos, range,
-              _camera.position);
+            _cars?.Render(view, proj, flashPos, flashDir, cutCos, range, _camera.position);
 
             _minimap!.Render(_camera, Size.X, Size.Y);
 
-            // Výměna framebufferů
             SwapBuffers();
         }
 

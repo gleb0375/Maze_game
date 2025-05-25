@@ -2,6 +2,9 @@
 
 namespace semestral_work.Graphics
 {
+    /// <summary>
+    /// Třída pro výpočet počtu snímků za sekundu (FPS).
+    /// </summary>
     internal class FpsCounter
     {
         private readonly Queue<double> _timestamps = new();

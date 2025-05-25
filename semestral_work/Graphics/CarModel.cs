@@ -13,11 +13,14 @@ using PrimitiveType = OpenTK.Graphics.OpenGL4.PrimitiveType;
 namespace semestral_work.Graphics
 {
     /// <summary>
-    /// Loads and renders a car model.
-    /// v2.3 – ground-plane filter refactored + detailed English logs.
+    /// Třída pro načtení a vykreslení 3D modelu auta ve formátu GLB.
+    /// Podporuje vícemateriálové modely, průhledné materiály i filtrování spodních ploch.
     /// </summary>
     internal sealed class CarModel : IDisposable
     {
+        /// <summary>
+        /// Interní reprezentace části modelu s informací o textuře, rozsahu indexů a průhlednosti.
+        /// </summary
         private readonly struct Part
         {
             public readonly int Texture;
@@ -29,6 +32,7 @@ namespace semestral_work.Graphics
             { Texture = tex; FirstIndex = first; IndexCount = count; Transparent = transp; }
         }
 
+        // Klíčová slova, která určují, zda část modelu představuje „zem“ a má být vynechána
         private static readonly string[] GroundKeywords =
             { "plane", "floor", "ground", "mat", "carpet" };
 
@@ -41,9 +45,11 @@ namespace semestral_work.Graphics
         public float BaseShiftY { get; }
         public float DefaultYaw { get; }
 
+        /// <summary>
+        /// Načte model auta z GLB souboru, připraví data pro vykreslování a odstraní spodní plochu.
+        /// </summary>
         public CarModel(string glbPath, Shader shader)
         {
-            Log.Information("In car Model");
             if (!File.Exists(glbPath)) throw new FileNotFoundException(glbPath);
             _shader = shader ?? throw new ArgumentNullException(nameof(shader));
 
@@ -98,7 +104,10 @@ namespace semestral_work.Graphics
                             mat2tex.Count, _parts.Count, vertices.Count / 8);
         }
 
-        // ── ground filter ───────────────────────────────────────────
+
+        /// <summary>
+        /// Zjistí, zda daná část modelu představuje podlahu (na základě názvu nebo geometrie).
+        /// </summary>
         private static bool IsGroundPrimitive(Node node, MeshPrimitive prim)
         {
             bool ContainsAny(string? s) =>
@@ -128,7 +137,9 @@ namespace semestral_work.Graphics
             return nameMatch || geomMatch;
         }
 
-        // ── transparent-material detection (any SharpGLTF version) ──
+        /// <summary>
+        /// Určí, zda je materiál průhledný na základě vlastnosti Alpha/AlphaMode.
+        /// </summary>
         private static bool IsTransparent(Material? mat)
         {
             if (mat == null) return false;
@@ -149,12 +160,12 @@ namespace semestral_work.Graphics
             }
 
             bool transparent = IsBlend(mode);
-            if (transparent)
-                Log.Information("Transparent material detected: '{Mat}' (mode={Mode})", mat.Name, mode);
             return transparent;
         }
 
-        // ── recursive build ─────────────────────────────────────────
+        /// <summary>
+        /// Rekurzivně projde uzly scény a připraví vrcholy, indexy a části modelu.
+        /// </summary>
         private void Collect(Node node,
                              ref uint baseVertex,
                              List<float> verts,
@@ -208,7 +219,9 @@ namespace semestral_work.Graphics
                 Collect(child, ref baseVertex, verts, idx, mat2tex);
         }
 
-        // ── texture cache ───────────────────────────────────────────
+        /// <summary>
+        /// Načte texturu k materiálu nebo vrátí bílou 1×1 pokud chybí.
+        /// </summary>
         private int GetOrLoadTexture(Material? mat, Dictionary<Material, int> cache)
         {
             if (mat != null && cache.TryGetValue(mat, out int cached)) return cached;
@@ -237,7 +250,9 @@ namespace semestral_work.Graphics
                 m.M31, m.M32, m.M33, m.M34,
                 m.M41, m.M42, m.M43, m.M44);
 
-        // ── render ──────────────────────────────────────────────────
+        /// <summary>
+        /// Vykreslí model auta včetně průhledných částí.
+        /// </summary>
         public void Render(Matrix4 model, Matrix4 view, Matrix4 proj,
                            Vector3 lightPos, Vector3 lightDir,
                            float cutCos, float range, Vector3 camPos)
@@ -287,6 +302,9 @@ namespace semestral_work.Graphics
                             DrawElementsType.UnsignedInt, ofs);
         }
 
+        /// <summary>
+        /// Uvolní alokované OpenGL prostředky.
+        /// </summary>
         public void Dispose()
         {
             GL.DeleteVertexArray(_vao);

@@ -5,6 +5,9 @@ using semestral_work.Map;
 using System;
 using System.Collections.Generic;
 
+/// <summary>
+/// Třída zajišťující správu pozic aut v mapě a jejich vykreslování.
+/// </summary>
 internal sealed class CarManager : IDisposable
 {
     private readonly CarModel _car;
@@ -12,6 +15,9 @@ internal sealed class CarManager : IDisposable
 
     private const float SCALE = 0.9f;
 
+    /// <summary>
+    /// Načte 3D model auta a uloží pozice z mapy, kde se mají auta vykreslit.
+    /// </summary>
     public CarManager(ParsedMap map, Shader carShader)
     {
         _car = new CarModel(AppConfig.GetCarModelPath(), carShader);
@@ -22,6 +28,9 @@ internal sealed class CarManager : IDisposable
                     _positions.Add(new Vector3(c * 2f + 1f, 0f, r * 2f + 1f));
     }
 
+    /// <summary>
+    /// Vykreslí všechna auta na jejich definovaných pozicích.
+    /// </summary
     public void Render(Matrix4 view, Matrix4 proj,
                        Vector3 lightPos, Vector3 lightDir,
                        float cutCos, float range, Vector3 camPos)
