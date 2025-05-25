@@ -7,13 +7,22 @@ using GLKeys = OpenTK.Windowing.GraphicsLibraryFramework.Keys;
 
 namespace semestral_work.Graphics
 {
+    /// <summary>
+    /// Kamera hráče s podporou jemného setrvačného dosmyku a pohupování (head‑bob)
+    /// při chůzi. Logická pozice <see cref="position"/> se používá pro kolize,
+    /// zatímco <see cref="_renderPosition"/> je vyhlazená/animovaná pozice, která
+    /// se předává do view‑matice (LookAt).
+    /// </summary>
     internal class Camera
     {
         public float screenWidth;
         public float screenHeight;
 
-        // Pozice kamery
+        // Logická (fyzická) pozice hráče – pro kolize a logiku.
         public Vector3 position;
+
+        // Vyhlazená pozice kamery použitá pro renderování.
+        private Vector3 _renderPosition;
 
         private Vector3 up = Vector3.UnitY;
         private Vector3 front = -Vector3.UnitZ;
@@ -25,26 +34,34 @@ namespace semestral_work.Graphics
         private bool firstMove = true;
         public Vector2 lastPos;
 
-        private ParsedMap _map;
+        private readonly ParsedMap _map;
 
-        // Poloměr hráče pro kolize
-        private float playerRadius = 0.3f;
+        // Poloměr hráče pro kolize.
+        private readonly float playerRadius = 0.3f;
 
-        // Parametry pohybu
-        private float movementSpeed;
-        private float mouseSensitivity;
-        private float lightHeight;
-        private float angleOfDepression;
+        // Parametry pohybu.
+        private readonly float movementSpeed;
+        private readonly float mouseSensitivity;
+        private readonly float lightHeight;
+        private readonly float angleOfDepression;
 
-        private float lightCutoffDeg;
-        private float lightRange;
+        private readonly float lightCutoffDeg;
+        private readonly float lightRange;
+
+        // --- Dynamika / inertia & head‑bob ---
+        private bool _isMoving;
+        private float _bobTimer;
+        private readonly float _bobSpeed = 8.0f;   // Hz
+        private readonly float _bobAmount = 0.03f; // metry
+        private readonly float _smoothTime = 0.25f; // s (e^-t/τ)
+        private readonly float _baseHeight;        // výška očí od podlahy
 
         public float LightCutoffDeg => lightCutoffDeg;
         public float LightRange => lightRange;
         public float YawDeg => yaw;
 
         /// <summary>
-        /// Konstruktor kamery s rozšířenými parametry pro světlo.
+        /// Konstruktor kamery.
         /// </summary>
         public Camera(
             float width,
@@ -55,41 +72,61 @@ namespace semestral_work.Graphics
             float mouseSensitivity,
             float lightHeight,
             float angleOfDepression,
-            float lightCutoffDeg,    
-            float lightRange
-        )
+            float lightCutoffDeg,
+            float lightRange)
         {
             screenWidth = width;
             screenHeight = height;
             position = startPosition;
-            _map = map;
+            _renderPosition = startPosition;
+            _baseHeight = startPosition.Y;
 
+            _map = map;
             this.movementSpeed = movementSpeed;
             this.mouseSensitivity = mouseSensitivity;
             this.lightHeight = lightHeight;
             this.angleOfDepression = angleOfDepression;
-            this.lightCutoffDeg = lightCutoffDeg; 
-            this.lightRange = lightRange;         
+            this.lightCutoffDeg = lightCutoffDeg;
+            this.lightRange = lightRange;
         }
 
         /// <summary>
-        /// Aktualizace kamery (pohyb, myš).
+        /// Hlavní update – zpracuje vstup, vyhodnotí kolize a aplikuje pohupování & setrvačnost.
         /// </summary>
         public void Update(KeyboardState input, MouseState mouse, FrameEventArgs e)
         {
             InputController(input, mouse, e);
+
+            float dt = (float)e.Time;
+
+            // --- Vyhlazení (setrvačnost) logické → render pozice ---
+            float lerpFactor = 1f - MathF.Exp(-dt / _smoothTime);
+            _renderPosition = Vector3.Lerp(_renderPosition, position, lerpFactor);
+
+            // --- Head‑bob ---
+            if (_isMoving)
+            {
+                _bobTimer += dt * _bobSpeed;
+            }
+            else
+            {
+                _bobTimer = 0f; // reset, ať animace vždy začíná z nulové fáze
+            }
+
+            float yOffset = MathF.Sin(_bobTimer) * _bobAmount * (_isMoving ? 1f : 0f);
+            _renderPosition.Y = _baseHeight + yOffset;
         }
 
         /// <summary>
-        /// Vrací view matici (pohled kamery).
+        /// View‑matice používá vyhlazenou a animovanou pozici kamery.
         /// </summary>
         public Matrix4 GetViewMatrix()
         {
-            return Matrix4.LookAt(position, position + front, up);
+            return Matrix4.LookAt(_renderPosition, _renderPosition + front, up);
         }
 
         /// <summary>
-        /// Vrací projekční matici (45° FOV).
+        /// Projekční matice (45° FOV).
         /// </summary>
         public Matrix4 GetProjectionMatrix()
         {
@@ -100,8 +137,12 @@ namespace semestral_work.Graphics
                 100.0f);
         }
 
+        // =====================================================================
+        //                           Privátní metody
+        // =====================================================================
+
         /// <summary>
-        /// Zpracování vstupu (W, A, S, D) a pohybu kamery s kolizemi.
+        /// Zpracuje pohyb hráče (WASD) + myš a provede kolize.
         /// </summary>
         private void InputController(KeyboardState input, MouseState mouse, FrameEventArgs e)
         {
@@ -111,18 +152,17 @@ namespace semestral_work.Graphics
             if (input.IsKeyDown(GLKeys.D)) inputDir.X += 1f;
             if (input.IsKeyDown(GLKeys.A)) inputDir.X -= 1f;
 
-            if (inputDir.LengthSquared > 0.0001f)
+            _isMoving = inputDir.LengthSquared > 0.0001f;
+            if (_isMoving)
                 inputDir = inputDir.Normalized();
 
             Vector3 horizFront = new Vector3(front.X, 0f, front.Z).Normalized();
             Vector3 horizRight = Vector3.Normalize(Vector3.Cross(horizFront, Vector3.UnitY));
-
-            Vector3 move = (horizFront * inputDir.Y + horizRight * inputDir.X)
-                         * (movementSpeed * (float)e.Time);
+            Vector3 move = (horizFront * inputDir.Y + horizRight * inputDir.X) * (movementSpeed * (float)e.Time);
 
             AttemptSlideMove(move);
 
-            // Pohyb myší
+            // --- Myš ---
             if (firstMove)
             {
                 lastPos = new Vector2(mouse.X, mouse.Y);
@@ -142,7 +182,7 @@ namespace semestral_work.Graphics
         }
 
         /// <summary>
-        /// Posuv s možností sklouznutí po zdi.
+        /// Posuv s možností sklouznutí po stěnách.
         /// </summary>
         private void AttemptSlideMove(Vector3 move)
         {
@@ -172,7 +212,7 @@ namespace semestral_work.Graphics
         }
 
         /// <summary>
-        /// Kontrola kolizí s mapou a zdmi.
+        /// Kolizní test s mapou.
         /// </summary>
         private bool CanWalkAt(Vector2 newPos2D)
         {
@@ -213,19 +253,17 @@ namespace semestral_work.Graphics
         }
 
         /// <summary>
-        /// Aktualizuje směrové vektory podle pitch/yaw.
+        /// Přepočítá směrové vektory (front/right/up) z pitch & yaw.
         /// </summary>
         private void UpdateVectors()
         {
-            // Zabraňme extrémním úhlům (±90°), aby se kamera neotočila vzhůru nohama
+            // Omez extrémní úhly, ať se kamera nepřevrátí.
             if (pitch > 89.0f) pitch = 89.0f;
             if (pitch < -89.0f) pitch = -89.0f;
 
-            front.X = MathF.Cos(MathHelper.DegreesToRadians(pitch))
-                    * MathF.Cos(MathHelper.DegreesToRadians(yaw));
+            front.X = MathF.Cos(MathHelper.DegreesToRadians(pitch)) * MathF.Cos(MathHelper.DegreesToRadians(yaw));
             front.Y = MathF.Sin(MathHelper.DegreesToRadians(pitch));
-            front.Z = MathF.Cos(MathHelper.DegreesToRadians(pitch))
-                    * MathF.Sin(MathHelper.DegreesToRadians(yaw));
+            front.Z = MathF.Cos(MathHelper.DegreesToRadians(pitch)) * MathF.Sin(MathHelper.DegreesToRadians(yaw));
             front = Vector3.Normalize(front);
 
             right = Vector3.Normalize(Vector3.Cross(front, Vector3.UnitY));
@@ -234,22 +272,19 @@ namespace semestral_work.Graphics
 
         /// <summary>
         /// Vrací pozici a směr svítilny (se sklonem dolů).
+        /// Používá XZ souřadnice renderované kamery pro konzistenci s head‑bobem.
         /// </summary>
         public (Vector3 position, Vector3 direction) GetFlashlightParams()
         {
-            // Umístění baterky = XZ z kamery, Y = lightHeight
-            Vector3 flashlightPos = new Vector3(position.X, lightHeight, position.Z);
+            Vector3 flashlightPos = new Vector3(_renderPosition.X, lightHeight, _renderPosition.Z);
 
-            // Použijeme menší pitch, abychom se dívali trochu dolů (angleOfDepression)
             float pitchFlashlight = pitch - angleOfDepression;
             float yawFlashlight = yaw;
 
             Vector3 dir;
-            dir.X = MathF.Cos(MathHelper.DegreesToRadians(pitchFlashlight))
-                  * MathF.Cos(MathHelper.DegreesToRadians(yawFlashlight));
+            dir.X = MathF.Cos(MathHelper.DegreesToRadians(pitchFlashlight)) * MathF.Cos(MathHelper.DegreesToRadians(yawFlashlight));
             dir.Y = MathF.Sin(MathHelper.DegreesToRadians(pitchFlashlight));
-            dir.Z = MathF.Cos(MathHelper.DegreesToRadians(pitchFlashlight))
-                  * MathF.Sin(MathHelper.DegreesToRadians(yawFlashlight));
+            dir.Z = MathF.Cos(MathHelper.DegreesToRadians(pitchFlashlight)) * MathF.Sin(MathHelper.DegreesToRadians(yawFlashlight));
             dir = Vector3.Normalize(dir);
 
             return (flashlightPos, dir);
